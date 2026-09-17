@@ -1,0 +1,16 @@
+# Simulation outputs and logs
+sim/
+*.log
+*.wlf
+*.vcd
+*.ucdb
+transcript
+covhtmlreport/
+vsim.wlf
+work/
+
+# Editor / OS files
+.DS_Store
+*.swp
+*.swo
+*~
