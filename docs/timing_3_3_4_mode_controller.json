@@ -1,0 +1,31 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "p.............."
+    },
+    {
+      "name": "sel_pulse",
+      "wave": "0..10....10...."
+    },
+    {
+      "name": "adj_mode[1:0]",
+      "wave": "=..=.....=.....",
+      "data": [
+        "2'b00 (MODE_RUN)",
+        "2'b01 (MODE_ADJ_SEC)",
+        "2'b10 (MODE_ADJ_MIN)"
+      ]
+    }
+  ],
+  "config": {
+    "hscale": 2.5
+  },
+  "head": {
+    "text": "Gi\u1ea3n \u0111\u1ed3 3.3.4: mode_controller - Chuy\u1ec3n \u0111\u1ed5i tr\u1ea1ng th\u00e1i FSM Moore theo xung sel_pulse",
+    "tick": 0
+  },
+  "foot": {
+    "text": "M\u1ed7i xung sel_pulse \u0111\u01a1n k\u1ef3 k\u00edch ho\u1ea1t FSM chuy\u1ec3n sang ch\u1ebf \u0111\u1ed9 k\u1ebf ti\u1ebfp theo th\u1ee9 t\u1ef1 tu\u1ea7n ho\u00e0n 4 tr\u1ea1ng th\u00e1i"
+  }
+}

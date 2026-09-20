@@ -1,0 +1,99 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="hms_spec_diagram">
+    <mxGraphModel dx="1165" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="480" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="b_box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fcfcfc;strokeColor=#ffb300;strokeWidth=1.5;startSize=26;fontFamily=Helvetica;fontSize=11;rounded=1;" value="&lt;b&gt;mode_controller: Sơ đồ khối &amp;amp; FSM Moore 4 Chế độ (Định tuyến dây vuông góc)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="430" width="1050" x="30" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="tOKZAoRVbgFMAneGASu3-2" edge="1" parent="b_box" source="fsm_blk" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=3;" target="st_run" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="200" />
+              <mxPoint x="250" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fsm_blk" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffb300;strokeWidth=1.5;align=left;spacingLeft=10;fontSize=11;" value="&lt;b&gt;Khối FSM Controller&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font color=&#39;#b45f06&#39; style=&#39;font-size:10px;&#39;&gt;• Input: sel_pulse, rstn&lt;br&gt;• Reg: current_state[1:0]&lt;br&gt;• Output: adj_mode[1:0]&lt;/font&gt;" vertex="1">
+          <mxGeometry height="150" width="180" x="30" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="p_rstn" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#e53935;fontSize=10;" value="&lt;b&gt;rstn&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="70" x="40" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="tOKZAoRVbgFMAneGASu3-1" edge="1" parent="b_box" source="p_sel_p" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;" target="fsm_blk" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="120" />
+              <mxPoint x="170" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_sel_p" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffb300;fontSize=10;" value="&lt;b&gt;sel_pulse&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="80" x="130" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e_in_rst" edge="1" parent="b_box" source="p_rstn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e53935;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="fsm_blk">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="st_run" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;strokeWidth=2;fontSize=11;" value="&lt;b&gt;MODE_RUN&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#0d47a1&#39; style=&#39;font-size:10px;&#39;&gt;adj_mode = 2&#39;b00&lt;br&gt;Đếm bình thường&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="340" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="st_sec" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#fb8c00;strokeWidth=2;fontSize=11;" value="&lt;b&gt;MODE_ADJ_SEC&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#0d47a1&#39; style=&#39;font-size:10px;&#39;&gt;adj_mode = 2&#39;b01&lt;br&gt;Chỉnh Giây (0..59)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="580" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="st_min" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#fb8c00;strokeWidth=2;fontSize=11;" value="&lt;b&gt;MODE_ADJ_MIN&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#0d47a1&#39; style=&#39;font-size:10px;&#39;&gt;adj_mode = 2&#39;b10&lt;br&gt;Chỉnh Phút (0..59)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="820" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="st_hr" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#fb8c00;strokeWidth=2;fontSize=11;" value="&lt;b&gt;MODE_ADJ_HOUR&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#0d47a1&#39; style=&#39;font-size:10px;&#39;&gt;adj_mode = 2&#39;b11&lt;br&gt;Chỉnh Giờ (0..23)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="580" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_rst_wire" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#b71c1c;fontStyle=1;fontSize=10;" value="Reset (rstn=0)" vertex="1">
+          <mxGeometry height="20" width="100" x="225" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_1" edge="1" parent="b_box" source="st_run" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ffb300;strokeWidth=2.5;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="st_sec">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="85" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_tr1" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#b45f06;fontStyle=1;fontSize=10;" value="sel_pulse = 1" vertex="1">
+          <mxGeometry height="20" width="90" x="460" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_2" edge="1" parent="b_box" source="st_sec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ffb300;strokeWidth=2.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="st_min">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="85" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_tr2" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#b45f06;fontStyle=1;fontSize=10;" value="sel_pulse = 1" vertex="1">
+          <mxGeometry height="20" width="90" x="770" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_3" edge="1" parent="b_box" source="st_min" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ffb300;strokeWidth=2.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="st_hr">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="315" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_tr3" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#b45f06;fontStyle=1;fontSize=10;" value="sel_pulse = 1" vertex="1">
+          <mxGeometry height="20" width="90" x="770" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="tr_4" edge="1" parent="b_box" source="st_hr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ffb300;strokeWidth=2.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="st_run">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="315" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_tr4" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#b45f06;fontStyle=1;fontSize=10;" value="sel_pulse = 1 (Về RUN)" vertex="1">
+          <mxGeometry height="20" width="140" x="435" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="note_fsm" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#cfd8dc;fontColor=#546e7a;fontSize=10;" value="Khi sel_pulse = 0: Tự duy trì trạng thái (Self-loop) | Toàn bộ các đường chuyển mạch đều là góc vuông 90°" vertex="1">
+          <mxGeometry height="25" width="640" x="340" y="380" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

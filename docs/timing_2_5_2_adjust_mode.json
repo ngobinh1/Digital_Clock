@@ -1,0 +1,68 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "p.................."
+    },
+    {
+      "name": "sel_in",
+      "wave": "0.1...0....1...0..."
+    },
+    {
+      "name": "sel_pulse",
+      "wave": "0..10.......10....."
+    },
+    {
+      "name": "adj_mode[1:0]",
+      "wave": "=..=........=......",
+      "data": [
+        "2'b00 (RUN)",
+        "2'b01 (ADJ_SEC)",
+        "2'b10 (ADJ_MIN)"
+      ]
+    },
+    {
+      "name": "up_in",
+      "wave": "0...1...0.........."
+    },
+    {
+      "name": "up_pulse",
+      "wave": "0....10............"
+    },
+    {
+      "name": "s_out[5:0]",
+      "wave": "=....=..=..........",
+      "data": [
+        "6'd58",
+        "6'd59",
+        "6'd59"
+      ]
+    },
+    {
+      "name": "down_in",
+      "wave": "0.............1...0"
+    },
+    {
+      "name": "down_pulse",
+      "wave": "0..............10.."
+    },
+    {
+      "name": "m_out[5:0]",
+      "wave": "=..............=...",
+      "data": [
+        "6'd00",
+        "6'd59 (Wrap-down)"
+      ]
+    }
+  ],
+  "config": {
+    "hscale": 2.2
+  },
+  "head": {
+    "text": "Gi\u1ea3n \u0111\u1ed3 2.5.2: Chuy\u1ec3n Ch\u1ebf \u0111\u1ed9 C\u00e0i \u0111\u1eb7t & \u0110i\u1ec1u ch\u1ec9nh Gi\u1edd / Ph\u00fat / Gi\u00e2y",
+    "tick": 0
+  },
+  "foot": {
+    "text": "sel_pulse chuy\u1ec3n tr\u1ea1ng th\u00e1i FSM -> up_pulse t\u0103ng gi\u00e2y -> down_pulse gi\u1ea3m ph\u00fat v\u1edbi t\u00ednh n\u0103ng Wrap-around (0 -> 59)"
+  }
+}

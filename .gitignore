@@ -14,3 +14,9 @@ work/
 *.swp
 *.swo
 *~
+.$*.bkp
+*.drawio.bkp
+*.drawio.dtmp
+__pycache__/
+*.py[cod]
+

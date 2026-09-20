@@ -1,0 +1,42 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "p........"
+    },
+    {
+      "name": "adj_mode[1:0]",
+      "wave": "=========",
+      "data": [
+        "2'b00 (MODE_RUN)"
+      ]
+    },
+    {
+      "name": "sec_tick",
+      "wave": "0..10...."
+    },
+    {
+      "name": "s_out[5:0]",
+      "wave": "=..=..=..",
+      "data": [
+        "6'd59",
+        "6'd00",
+        "6'd00"
+      ]
+    },
+    {
+      "name": "sec_rollover",
+      "wave": "0..10...."
+    }
+  ],
+  "config": {
+    "hscale": 2.5
+  },
+  "head": {
+    "text": "Gi\u1ea3n \u0111\u1ed3 3.4.4: second_counter - \u0110\u1ebfm tr\u00e0n 59 -> 00 v\u00e0 ph\u00e1t c\u1edd sec_rollover trong RUN Mode",
+    "tick": 0
+  },
+  "foot": {
+    "text": "T\u1ea1i th\u1eddi \u0111i\u1ec3m s_out = 59 v\u00e0 c\u00f3 xung sec_tick = 1, c\u1edd sec_rollover \u0111\u01b0\u1ee3c k\u00edch ho\u1ea1t trong \u0111\u00fang 1 chu k\u1ef3 clk"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "p........"
+    },
+    {
+      "name": "adj_mode[1:0]",
+      "wave": "=========",
+      "data": [
+        "2'b00 (MODE_RUN)"
+      ]
+    },
+    {
+      "name": "min_rollover",
+      "wave": "0..10...."
+    },
+    {
+      "name": "h_out[4:0]",
+      "wave": "=..=..=..",
+      "data": [
+        "5'd23",
+        "5'd00",
+        "5'd00"
+      ]
+    }
+  ],
+  "config": {
+    "hscale": 2.5
+  },
+  "head": {
+    "text": "Gi\u1ea3n \u0111\u1ed3 3.6.4: hour_counter - \u0110\u1ebfm tr\u00e0n Gi\u1edd 23 -> 00 (Chuy\u1ec3n sang ng\u00e0y m\u1edbi 00:00:00) trong RUN Mode",
+    "tick": 0
+  },
+  "foot": {
+    "text": "Khi h_out = 23 v\u00e0 nh\u1eadn \u0111\u01b0\u1ee3c min_rollover = 1, b\u1ed9 \u0111\u1ebfm gi\u1edd cu\u1ed9n v\u1ec1 00 \u0111\u1ec3 b\u1eaft \u0111\u1ea7u chu k\u1ef3 24 gi\u1edd m\u1edbi"
+  }
+}

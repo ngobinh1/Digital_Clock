@@ -1,0 +1,35 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "p......."
+    },
+    {
+      "name": "r_count[19:0]",
+      "wave": "=x======",
+      "data": [
+        "20'd999996",
+        "20'd999997",
+        "20'd999998",
+        "20'd999999",
+        "20'd000000",
+        "20'd000001",
+        "20'd000002"
+      ]
+    },
+    {
+      "name": "sec_tick",
+      "wave": "0....10."
+    }
+  ],
+  "config": {
+    "hscale": 2.8
+  },
+  "head": {
+    "text": "Gi\u1ea3n \u0111\u1ed3 3.2.4: prescaler_1hz - T\u1ea1o xung chu\u1ea9n 1Hz t\u1ea1i chu k\u1ef3 \u0111\u1ebfm th\u1ee9 999,999",
+    "tick": 999996
+  },
+  "foot": {
+    "text": "sec_tick t\u00edch c\u1ef1c m\u1ee9c cao \u0111\u00fang 1 chu k\u1ef3 khi r_count == 20'd999999, chu k\u1ef3 k\u1ebf ti\u1ebfp r_count t\u1ef1 cu\u1ed9n v\u1ec1 0"
+  }
+}

@@ -1,0 +1,83 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="hms_spec_diagram">
+    <mxGraphModel dx="1165" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1080" pageHeight="400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="b_box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fcfcfc;strokeColor=#0288d1;strokeWidth=1.5;startSize=26;fontFamily=Helvetica;fontSize=11;rounded=1;" value="&lt;b&gt;sync_edge_detector: Kiến trúc 1 kênh đồng bộ 2-FF &amp;amp; Bắt sườn dương&lt;/b&gt;" vertex="1">
+          <mxGeometry height="340" width="1020" x="30" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p_in" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0288d1;fontSize=11;" value="&lt;b&gt;in_async&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#555&#39; style=&#39;font-size:10px;&#39;&gt;sel/up/down&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="105" x="25" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="ff_s1" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;D-FF Tầng 1&lt;/b&gt;&lt;br&gt;&lt;b&gt;(FF_S1)&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39; style=&#39;font-size:10px;&#39;&gt;Sync thô&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="170" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="ff_s2" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;D-FF Tầng 2&lt;/b&gt;&lt;br&gt;&lt;b&gt;(FF_S2)&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39; style=&#39;font-size:10px;&#39;&gt;Khử Metastable&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="340" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="ff_d" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#fb8c00;fontSize=11;" value="&lt;b&gt;D-FF Trì hoãn&lt;/b&gt;&lt;br&gt;&lt;b&gt;(FF_D)&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#f57c00&#39; style=&#39;font-size:10px;&#39;&gt;Trễ 1 clock&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="510" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="inv1" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#e53935;fontSize=10;" value="&lt;b&gt;NOT&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39;&gt;~FF_D&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="675" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="and1" parent="b_box" style="shape=or;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1e88e5;direction=east;fontSize=11;" value="&lt;b&gt;AND&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="65" x="780" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="p_out" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;out_pulse&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39; style=&#39;font-size:10px;&#39;&gt;1-cycle pulse&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="105" x="895" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="b_box" source="p_in" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0288d1;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="ff_s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="b_box" source="ff_s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#43a047;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="ff_s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="b_box" source="ff_s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#43a047;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="ff_d">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="b_box" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1e88e5;strokeWidth=2;entryX=0;entryY=0.25;entryDx=0;entryDy=0;entryPerimeter=0;" target="and1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="45" />
+              <mxPoint x="740" y="45" />
+              <mxPoint x="740" y="123" />
+              <mxPoint x="760" y="122.5" />
+            </Array>
+            <mxPoint x="480" y="125" as="sourcePoint" />
+            <mxPoint x="750" y="90" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_ff_s2" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#0d47a1;fontStyle=1;fontSize=10;" value="FF_S2 (Đồng bộ)" vertex="1">
+          <mxGeometry height="20" width="105" x="545" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="b_box" source="ff_d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#fb8c00;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="inv1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="125" />
+              <mxPoint x="650" y="215" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="b_box" source="inv1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e53935;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.15;entryY=0.75;entryDx=0;entryDy=0;" target="and1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="750" y="215" />
+              <mxPoint x="750" y="165" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="b_box" source="and1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#43a047;strokeWidth=2.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p_out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_e7" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#1b5e20;fontStyle=1;fontSize=10;" value="FF_S2 &amp;amp;&amp;amp; ~FF_D" vertex="1">
+          <mxGeometry height="20" width="105" x="820" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="clk_bus" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#cfd8dc;fontColor=#546e7a;fontSize=10;" value="clk (1 MHz) &amp;amp; rstn (Active-Low) cấp trực tiếp đến tất cả các Flip-Flop" vertex="1">
+          <mxGeometry height="25" width="600" x="170" y="290" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
