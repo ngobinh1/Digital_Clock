@@ -34,6 +34,7 @@ interface hms_timer_if #(
     logic                  down_pulse;
     logic                  sec_tick;
     logic [1:0]            adj_mode;
+    logic                  cancel_pulse;
     logic                  sec_rollover;
     logic                  min_rollover;
 

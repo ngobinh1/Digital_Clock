@@ -2,41 +2,44 @@
   "signal": [
     {
       "name": "clk",
-      "wave": "p........"
+      "wave": "p..................."
     },
     {
-      "name": "adj_mode[1:0]",
-      "wave": "=========",
-      "data": [
-        "2'b00 (MODE_RUN)"
-      ]
+      "name": "adj_mode",
+      "wave": "2.3...............2.",
+      "data": ["RUN", "ADJ_SEC", "RUN"]
     },
     {
-      "name": "sec_tick",
-      "wave": "0..10...."
+      "name": "sel_pulse",
+      "wave": "010................."
+    },
+    {
+      "name": "up_pulse",
+      "wave": "0..10.10............"
+    },
+    {
+      "name": "cancel_pulse",
+      "wave": "0.................10"
+    },
+    {
+      "name": "r_sec_bak[5:0]",
+      "wave": "2.======............",
+      "data": ["0", "58", "58"]
     },
     {
       "name": "s_out[5:0]",
-      "wave": "=..=..=..",
-      "data": [
-        "6'd59",
-        "6'd00",
-        "6'd00"
-      ]
-    },
-    {
-      "name": "sec_rollover",
-      "wave": "0..10...."
+      "wave": "2.====2=..........=2",
+      "data": ["58", "58", "59", "0", "0", "58"]
     }
   ],
   "config": {
-    "hscale": 2.5
+    "hscale": 1.8
   },
   "head": {
-    "text": "Gi\u1ea3n \u0111\u1ed3 3.4.4: second_counter - \u0110\u1ebfm tr\u00e0n 59 -> 00 v\u00e0 ph\u00e1t c\u1edd sec_rollover trong RUN Mode",
+    "text": "Giản đồ 3.4.4: second_counter - Chốt Snapshot, Chỉnh Wrap-Around & Rollback",
     "tick": 0
   },
   "foot": {
-    "text": "T\u1ea1i th\u1eddi \u0111i\u1ec3m s_out = 59 v\u00e0 c\u00f3 xung sec_tick = 1, c\u1edd sec_rollover \u0111\u01b0\u1ee3c k\u00edch ho\u1ea1t trong \u0111\u00fang 1 chu k\u1ef3 clk"
+    "text": "Chốt r_sec_bak=58 | Chỉnh 58->59->00 (Wrap) | Nhận cancel_pulse -> Rollback s_out về 58"
   }
 }

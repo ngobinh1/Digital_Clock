@@ -1,0 +1,42 @@
+{
+  "signal": [
+    {
+      "name": "clk (1 MHz)",
+      "wave": "p..................."
+    },
+    {
+      "name": "btn_in (Nhiễu / Thô)",
+      "wave": "01010.1.............0",
+      "node": "..a...b.............c"
+    },
+    {
+      "name": "btn_sync (2-FF)",
+      "wave": "0..10.01............0"
+    },
+    {
+      "name": "timer_cnt",
+      "wave": "2..22.2======2======2",
+      "data": ["0", "1", "0", "0", "0..19999", "0", "0..19999", "0"]
+    },
+    {
+      "name": "btn_pulse",
+      "wave": "0............10.....10",
+      "node": ".............d......e"
+    }
+  ],
+  "edge": [
+    "a~>b Lọc nhiễu <20ms",
+    "b~>d Giữ đủ 20ms",
+    "d~>e Auto-Repeat (+20ms)"
+  ],
+  "config": {
+    "hscale": 1.8
+  },
+  "head": {
+    "text": "Giản đồ 2.5.2: Khử rung phím 20ms (Debouncing) & Tự động lặp lại (Auto-Repeat)",
+    "tick": 0
+  },
+  "foot": {
+    "text": "Nhiễu <20ms bị loại bỏ hoàn toàn | Giữ liên tục 20ms phát 1 xung | Tiếp tục giữ: Phát xung lặp lại định kỳ mỗi 20ms"
+  }
+}

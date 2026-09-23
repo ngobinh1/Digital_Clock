@@ -1,0 +1,54 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "p..................."
+    },
+    {
+      "name": "sel_pulse",
+      "wave": "010................."
+    },
+    {
+      "name": "up_pulse",
+      "wave": "0..10.10............"
+    },
+    {
+      "name": "sec_tick (1Hz)",
+      "wave": "0........10.10.10.10."
+    },
+    {
+      "name": "adj_mode[1:0]",
+      "wave": "2.3...............2.",
+      "data": ["MODE_RUN", "MODE_ADJ_SEC", "MODE_RUN"]
+    },
+    {
+      "name": "timeout_cnt",
+      "wave": "2...2.2..2..2..2..2.2",
+      "data": ["0", "0", "0", "1", "2", "3", "4", "0"]
+    },
+    {
+      "name": "cancel_pulse",
+      "wave": "0.................10"
+    },
+    {
+      "name": "r_sec_bak[5:0]",
+      "wave": "2.======............",
+      "data": ["0", "10", "10"]
+    },
+    {
+      "name": "s_out[5:0]",
+      "wave": "2.====2=..........=2",
+      "data": ["10", "10", "11", "12", "12", "10"]
+    }
+  ],
+  "config": {
+    "hscale": 1.8
+  },
+  "head": {
+    "text": "Giản đồ 2.5.3: Inactivity Timeout 5s & Rollback Hủy Thay Đổi về Snapshot",
+    "tick": 0
+  },
+  "foot": {
+    "text": "Bấm SEL: Snapshot chốt 10s | Chỉnh lên 12s | Treo 5s (4 sec_ticks): cancel_pulse=1 & s_out rollback về 10s"
+  }
+}

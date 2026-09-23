@@ -4,8 +4,10 @@
 // Description: Comprehensive SystemVerilog Testbench for verifying the
 //              HMS_Timer IP Core against all specification requirements.
 //              Features:
-//              - 10 Automated Test Cases (Reset, Prescaler, FSM, Cascade, Adjustments,
-//                Wrap-Arounds, Isolation, Conflict Resolution, Glitch, Day Wrap)
+//              - Automated Test Cases (Reset, Prescaler, FSM, Cascade, Adjustments,
+//                Wrap-Arounds, Isolation, Conflict Resolution, Glitch, Day Wrap,
+//                Button Debounce 20ms & Auto-Repeat, 5s Inactivity Timeout & Rollback,
+//                5s Inactivity Timeout Keepalive)
 //              - Golden Reference Model & Cycle-accurate Scoreboard
 //              - SystemVerilog Concurrent Assertions (SVA) Checkers
 //              - Functional Coverage Metric Tracking
@@ -51,12 +53,14 @@ module tb_hms_timer;
 
     // DUT Instantiation with fast prescaler parameter for testbench execution
     hms_timer #(
-        .CLK_FREQ_HZ   (SIM_CLK_FREQ_HZ),
-        .PSC_COUNT_MAX (SIM_PSC_COUNT_MAX),
-        .PSC_WIDTH     (SIM_PSC_WIDTH),
-        .SEC_WIDTH     (6),
-        .MIN_WIDTH     (6),
-        .HOUR_WIDTH    (5)
+        .CLK_FREQ_HZ      (SIM_CLK_FREQ_HZ),
+        .PSC_COUNT_MAX    (SIM_PSC_COUNT_MAX),
+        .PSC_WIDTH        (SIM_PSC_WIDTH),
+        .DEBOUNCE_TIME_MS (20), // At 100Hz, DEBOUNCE_CYCLES = (100*20)/1000 = 2 cycles
+        .TIMEOUT_SEC      (5),
+        .SEC_WIDTH        (6),
+        .MIN_WIDTH        (6),
+        .HOUR_WIDTH       (5)
     ) dut (
         .clk     (vif.clk),
         .rstn    (vif.rstn),
@@ -74,6 +78,7 @@ module tb_hms_timer;
     assign vif.down_pulse   = dut.down_pulse;
     assign vif.sec_tick     = dut.sec_tick;
     assign vif.adj_mode     = dut.adj_mode;
+    assign vif.cancel_pulse = dut.cancel_pulse;
     assign vif.sec_rollover = dut.sec_rollover;
     assign vif.min_rollover = dut.min_rollover;
 
@@ -105,7 +110,7 @@ module tb_hms_timer;
         driver.reset_dut(10);
         log_info("Observing natural counting progression across seconds and minutes...");
         
-        // Wait for 10 simulated seconds (each second = 5 clock cycles)
+        // Wait for 10 simulated seconds
         for (int i = 1; i <= 10; i++) begin
             @(posedge vif.sec_tick);
             @(posedge vif.clk); #1ns;
@@ -296,12 +301,12 @@ module tb_hms_timer;
         scoreboard.check_mode(MODE_ADJ_MIN, "TC8_MIN_MODE");
 
         // In ADJ_MIN mode, set minute to 15
-        repeat (15) driver.pulse_up(2, 3);
+        repeat (15) driver.pulse_up(3, 4);
         scoreboard.check_time(0, 15, 0, "TC8_MIN_AT_15");
 
         // Assert both UP and DOWN at the exact same clock cycles
         log_info("Pressing UP and DOWN simultaneously...");
-        driver.pulse_up_down_simultaneous(4, 5);
+        driver.pulse_up_down_simultaneous(3, 4);
         
         // Value must hold strictly at 15
         scoreboard.check_time(0, 15, 0, "TC8_HOLD_ON_SIMULTANEOUS_PRESS");
@@ -411,6 +416,132 @@ module tb_hms_timer;
         scoreboard.check_mode(MODE_RUN, "TC11_RETURN_RUN");
     endtask
 
+    // TC12: Button Debouncer 20ms Hold Threshold & Auto-Repeat Verification
+    task run_tc12_button_debouncer_and_autorepeat();
+        $display("\n--------------------------------------------------------------------------------");
+        $display(">>> TEST CASE 12: Button Debounce 20ms Hold & Auto-Repeat Verification <<<");
+        $display("--------------------------------------------------------------------------------");
+        driver.reset_dut(10);
+
+        // Enter ADJ_SEC mode
+        driver.pulse_sel(3, 4);
+        scoreboard.check_mode(MODE_ADJ_SEC, "TC12_ENTER_SEC_MODE");
+
+        // 1. Hold UP button for 1 clock cycle (less than 2 debounce cycles) -> Should be ignored
+        log_info("Testing button hold shorter than debounce threshold (1 cycle)...");
+        @(posedge vif.clk);
+        vif.up_in <= 1'b1;
+        @(posedge vif.clk);
+        vif.up_in <= 1'b0;
+        driver.wait_cycles(5);
+        scoreboard.check_time(0, 0, 0, "TC12_IGNORE_SHORT_PRESS");
+
+        // 2. Hold UP button for 3 cycles (>= 2 debounce cycles) -> Should generate exactly 1 pulse
+        log_info("Testing button hold exceeding debounce threshold (3 cycles -> 1 pulse)...");
+        driver.pulse_up(3, 5);
+        scoreboard.check_time(0, 0, 1, "TC12_SINGLE_DEBOUNCED_PULSE");
+
+        // 3. Hold UP button for 6 cycles (at 2 cycles/pulse -> generates 3 pulses due to auto-repeat)
+        log_info("Testing button held long for Auto-Repeat (6 cycles -> 3 pulses)...");
+        @(posedge vif.clk);
+        vif.up_in <= 1'b1;
+        repeat (6) @(posedge vif.clk);
+        vif.up_in <= 1'b0;
+        driver.wait_cycles(5);
+        // Previous value was 1, plus 3 pulses = 4
+        scoreboard.check_time(0, 0, 4, "TC12_AUTO_REPEAT_INCREMENT");
+
+        // Return to RUN mode
+        driver.pulse_sel(3, 4); // SEC -> MIN
+        driver.pulse_sel(3, 4); // MIN -> HOUR
+        driver.pulse_sel(3, 4); // HOUR -> RUN
+        scoreboard.check_mode(MODE_RUN, "TC12_RETURN_RUN");
+    endtask
+
+    // TC13: 5s Inactivity Timeout & Automatic Rollback (Cancel Changes)
+    task run_tc13_inactivity_timeout_rollback();
+        $display("\n--------------------------------------------------------------------------------");
+        $display(">>> TEST CASE 13: 5s Inactivity Timeout & Automatic Rollback Verification <<<");
+        $display("--------------------------------------------------------------------------------");
+        driver.reset_dut(10);
+        
+        // Ensure starting at 00:00:00 in MODE_RUN
+        scoreboard.check_time(0, 0, 0, "TC13_INIT_TIME");
+        scoreboard.check_mode(MODE_RUN, "TC13_INIT_MODE");
+
+        // Step 1: Enter ADJ_SEC mode (Snapshot captures 00:00:00)
+        driver.pulse_sel(3, 4);
+        scoreboard.check_mode(MODE_ADJ_SEC, "TC13_ENTER_ADJ_SEC");
+
+        // Step 2: Modify seconds to 25
+        log_info("Modifying seconds to 25...");
+        repeat (25) driver.pulse_up(3, 4);
+        scoreboard.check_time(0, 0, 25, "TC13_SEC_MODIFIED_TO_25");
+
+        // Step 3: Switch to ADJ_MIN mode and modify minutes to 40
+        driver.pulse_sel(3, 4);
+        scoreboard.check_mode(MODE_ADJ_MIN, "TC13_ENTER_ADJ_MIN");
+        repeat (40) driver.pulse_up(3, 4);
+        scoreboard.check_time(0, 40, 25, "TC13_MIN_MODIFIED_TO_40");
+
+        // Step 4: Switch to ADJ_HOUR mode and modify hours to 12
+        driver.pulse_sel(3, 4);
+        scoreboard.check_mode(MODE_ADJ_HOUR, "TC13_ENTER_ADJ_HOUR");
+        repeat (12) driver.pulse_up(3, 4);
+        scoreboard.check_time(12, 40, 25, "TC13_HOUR_MODIFIED_TO_12");
+
+        // Step 5: Do NOT commit via SEL. Instead, stay idle for 5 seconds (5 sec_ticks)
+        log_info("Idling without any button activity to trigger 5s Inactivity Timeout...");
+        repeat (5) begin
+            @(posedge vif.sec_tick);
+        end
+        repeat (3) @(posedge vif.clk); #1ns;
+
+        // Step 6: Verify FSM automatically returns to MODE_RUN and rolls back to 00:00:00
+        scoreboard.check_mode(MODE_RUN, "TC13_AUTO_RETURNED_TO_RUN");
+        scoreboard.check_time(0, 0, 0, "TC13_ROLLBACK_TO_SNAPSHOT_SUCCESS");
+    endtask
+
+    // TC14: 5s Inactivity Timeout Keep-Alive Activity Reset
+    task run_tc14_inactivity_keepalive();
+        $display("\n--------------------------------------------------------------------------------");
+        $display(">>> TEST CASE 14: 5s Inactivity Timeout Keep-Alive Activity Reset <<<");
+        $display("--------------------------------------------------------------------------------");
+        driver.reset_dut(10);
+        
+        // Enter ADJ_SEC mode
+        driver.pulse_sel(3, 4);
+        scoreboard.check_mode(MODE_ADJ_SEC, "TC14_ENTER_ADJ_SEC");
+
+        // Modify seconds to 10
+        repeat (10) driver.pulse_up(3, 4);
+        scoreboard.check_time(0, 0, 10, "TC14_SEC_SET_10");
+
+        // Wait 3 seconds (< 5 seconds timeout)
+        log_info("Waiting 3 seconds (< 5s timeout)...");
+        repeat (3) @(posedge vif.sec_tick);
+        scoreboard.check_mode(MODE_ADJ_SEC, "TC14_STILL_IN_ADJ_SEC");
+
+        // Press UP button to reset inactivity timer (Keep-Alive)
+        log_info("Pressing UP button to reset inactivity timer...");
+        driver.pulse_up(3, 4);
+        scoreboard.check_time(0, 0, 11, "TC14_SEC_SET_11");
+
+        // Wait another 3 seconds (< 5s since last press)
+        log_info("Waiting another 3 seconds (< 5s since last press)...");
+        repeat (3) @(posedge vif.sec_tick);
+        scoreboard.check_mode(MODE_ADJ_SEC, "TC14_STILL_ALIVE_AFTER_KEEP_ALIVE");
+
+        // Now explicitly commit by cycling through to MODE_RUN
+        driver.pulse_sel(3, 4); // SEC -> MIN
+        driver.pulse_sel(3, 4); // MIN -> HOUR
+        driver.pulse_sel(3, 4); // HOUR -> RUN
+        scoreboard.check_mode(MODE_RUN, "TC14_EXPLICIT_COMMIT_RUN");
+
+        // Value must be retained at 00:00:11
+        scoreboard.check_time(0, 0, 11, "TC14_VALUE_COMMITTED_SUCCESSFULLY");
+    endtask
+
     //==========================================================================
     // Main Testbench Process
     //==========================================================================
@@ -436,6 +567,9 @@ module tb_hms_timer;
         run_tc9_async_glitch_test();
         run_tc10_midnight_cascade();
         run_tc11_exhaustive_cross_stimulus();
+        run_tc12_button_debouncer_and_autorepeat();
+        run_tc13_inactivity_timeout_rollback();
+        run_tc14_inactivity_keepalive();
 
         // Print Coverage and Scorecard Reports
         driver.wait_cycles(10);

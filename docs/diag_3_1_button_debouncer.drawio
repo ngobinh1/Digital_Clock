@@ -1,0 +1,51 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="hms_spec_diagram">
+    <mxGraphModel dx="1165" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1080" pageHeight="400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="b_box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fcfcfc;strokeColor=#0288d1;strokeWidth=1.5;startSize=26;fontFamily=Helvetica;fontSize=11;rounded=1;" value="&lt;b&gt;button_debouncer: Kiến trúc Đồng bộ 2-FF &amp;amp; Bộ đếm Khử rung 20ms có Auto-Repeat&lt;/b&gt;" vertex="1">
+          <mxGeometry height="340" width="1020" x="30" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p_in" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0288d1;fontSize=11;" value="&lt;b&gt;btn_in&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#555&#39; style=&#39;font-size:10px;&#39;&gt;sel/up/down&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="105" x="25" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="ff_s1" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;D-FF Tầng 1&lt;/b&gt;&lt;br&gt;&lt;b&gt;(sync_reg[0])&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39; style=&#39;font-size:10px;&#39;&gt;Lấy mẫu thô&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="165" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="ff_s2" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;D-FF Tầng 2&lt;/b&gt;&lt;br&gt;&lt;b&gt;(sync_reg[1])&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39; style=&#39;font-size:10px;&#39;&gt;btn_sync chuẩn&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="335" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="b_cnt" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#fb8c00;strokeWidth=1.5;fontSize=11;" value="&lt;b&gt;Bộ đếm định thời 20ms&lt;/b&gt;&lt;br&gt;&lt;b&gt;timer_cnt[14:0]&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#e65100&#39; style=&#39;font-size:10px;&#39;&gt;• Đếm 0..DEBOUNCE_CYCLES-1&lt;br&gt;• btn_sync == 0: Reset về 0&lt;br&gt;• btn_sync == 1: Tăng +1&lt;/font&gt;" vertex="1">
+          <mxGeometry height="110" width="220" x="510" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b_comp" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#1e88e5;fontSize=11;" value="&lt;b&gt;Bộ so sánh ngưỡng&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#0d47a1&#39; style=&#39;font-size:10px;&#39;&gt;timer_cnt == 19,999&lt;br&gt;• Phát xung 1-cycle&lt;br&gt;• Reset timer_cnt = 0&lt;br&gt;(Auto-repeat)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="110" width="150" x="760" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p_out" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;btn_pulse&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39; style=&#39;font-size:10px;&#39;&gt;1-cycle pulse&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="75" x="935" y="110" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="e1" edge="1" parent="b_box" source="p_in" target="ff_s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#0288d1;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="b_box" source="ff_s1" target="ff_s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43a047;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="b_box" source="ff_s2" target="b_cnt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43a047;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="b_box" source="b_cnt" target="b_comp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#fb8c00;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="b_box" source="b_comp" target="p_out" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43a047;strokeWidth=2.5;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="clk_bus" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#cfd8dc;fontColor=#546e7a;fontSize=10;" value="clk (1 MHz) &amp;amp; rstn (Active-Low) cấp đồng bộ toàn cục đến tất cả các thanh ghi" vertex="1">
+          <mxGeometry height="25" width="600" x="210" y="290" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

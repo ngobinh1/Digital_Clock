@@ -1,59 +1,66 @@
 <mxfile host="Electron">
   <diagram name="Page-1" id="hms_spec_diagram">
-    <mxGraphModel dx="1165" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1040" pageHeight="470" math="0" shadow="0">
+    <mxGraphModel dx="1165" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1080" pageHeight="460" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="b_box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fcfcfc;strokeColor=#43a047;strokeWidth=1.5;startSize=26;fontFamily=Helvetica;fontSize=11;rounded=1;" value="&lt;b&gt;minute_counter: Sơ đồ khối bộ đếm Phút Modulo-60 &amp;amp; Mạch khóa tràn (Rollover Gating)&lt;/b&gt;" vertex="1">
-          <mxGeometry height="420" width="980" x="30" y="30" as="geometry" />
+        <mxCell id="b_box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fcfcfc;strokeColor=#43a047;strokeWidth=1.5;startSize=26;fontFamily=Helvetica;fontSize=11;rounded=1;" value="&lt;b&gt;minute_counter: Sơ đồ khối Modulo-60 &amp;amp; Thanh ghi Snapshot Shadow Rollback&lt;/b&gt;" vertex="1">
+          <mxGeometry height="400" width="1020" x="30" y="30" as="geometry" />
         </mxCell>
-        <mxCell id="in_mode" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffb300;fontSize=11;" value="&lt;b&gt;adj_mode[1:0]&lt;/b&gt;" vertex="1">
-          <mxGeometry height="36" width="130" x="25" y="60" as="geometry" />
+        
+        <mxCell id="p_in_grp" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f8e9;strokeColor=#8bc34a;align=left;spacingLeft=10;fontSize=10;" value="&lt;b&gt;TÍN HIỆU ĐIỀU KHIỂN&lt;/b&gt;&lt;br&gt;• adj_mode[1:0]&lt;br&gt;• sec_rollover (1-cyc)&lt;br&gt;• sel_pulse (Chốt Snapshot)&lt;br&gt;• up_pulse / down_pulse&lt;br&gt;• cancel_pulse (Rollback)&lt;br&gt;• rstn (Reset)" vertex="1">
+          <mxGeometry height="140" width="180" x="25" y="110" as="geometry" />
         </mxCell>
-        <mxCell id="in_sec_roll" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbe9e7;strokeColor=#ff7043;fontSize=11;" value="&lt;b&gt;sec_rollover&lt;/b&gt;" vertex="1">
-          <mxGeometry height="36" width="130" x="25" y="120" as="geometry" />
+
+        <mxCell id="r_main" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;strokeWidth=2;fontSize=11;" value="&lt;b&gt;Thanh ghi chính: r_min[5:0]&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39; style=&#39;font-size:10px;&#39;&gt;• Modulo-60 (0..59)&lt;br&gt;• RUN: Tăng theo sec_rollover&lt;br&gt;• ADJ: Tăng/Giảm wrap-around&lt;br&gt;• cancel_pulse: Lấy từ r_min_bak&lt;/font&gt;" vertex="1">
+          <mxGeometry height="110" width="220" x="290" y="80" as="geometry" />
         </mxCell>
-        <mxCell id="in_up" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#039be5;fontSize=11;" value="&lt;b&gt;up_pulse&lt;/b&gt;" vertex="1">
-          <mxGeometry height="36" width="130" x="25" y="180" as="geometry" />
+
+        <mxCell id="r_bak" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff3e0;strokeColor=#fb8c00;strokeWidth=2;fontSize=11;" value="&lt;b&gt;Thanh ghi Snapshot: r_min_bak[5:0]&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#e65100&#39; style=&#39;font-size:10px;&#39;&gt;Chốt giá trị r_min khi&lt;br&gt;(adj_mode == RUN &amp;amp;&amp;amp; sel_pulse)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="220" x="290" y="230" as="geometry" />
         </mxCell>
-        <mxCell id="in_down" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#039be5;fontSize=11;" value="&lt;b&gt;down_pulse&lt;/b&gt;" vertex="1">
-          <mxGeometry height="36" width="130" x="25" y="240" as="geometry" />
+
+        <mxCell id="b_comp" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#0288d1;fontSize=11;" value="&lt;b&gt;Tạo cờ tràn min_rollover&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#01579b&#39; style=&#39;font-size:10px;&#39;&gt;r_min == 59 &amp;amp;&amp;amp; sec_rollover &amp;amp;&amp;amp;&lt;br&gt;(adj_mode == MODE_RUN)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="190" x="590" y="95" as="geometry" />
         </mxCell>
-        <mxCell id="cnt_core" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;align=left;spacingLeft=10;fontSize=11;" value="&lt;b&gt;Logic Cập Nhật &amp;amp; Thanh Ghi Đếm Phút (r_min[5:0])&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font color=&#39;#1b5e20&#39; style=&#39;font-size:10px;&#39;&gt;• &lt;b&gt;MODE_RUN (00):&lt;/b&gt; Nếu sec_rollover=1, tăng r_min (+1), 59 cuộn về 00.&lt;br&gt;• &lt;b&gt;MODE_ADJ_MIN (10):&lt;/b&gt;&lt;br&gt;  - up_pulse = 1: Tăng phút modulo-60 (59 -&amp;gt; 0 wrap-up)&lt;br&gt;  - down_pulse = 1: Giảm phút modulo-60 (0 -&amp;gt; 59 wrap-down)&lt;br&gt;  - Cả 2 xung cùng tích cực: Giữ nguyên (Hold)&lt;br&gt;• &lt;b&gt;Chế độ khác:&lt;/b&gt; Giữ nguyên giá trị r_min.&lt;/font&gt;" vertex="1">
-          <mxGeometry height="235" width="460" x="235" y="50" as="geometry" />
+
+        <mxCell id="p_out_m" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#e53935;fontSize=11;" value="&lt;b&gt;m_out[5:0]&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#555&#39;&gt;Phút: 0..59&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="870" y="80" as="geometry" />
         </mxCell>
-        <mxCell id="roll_logic" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#e53935;align=left;spacingLeft=10;fontSize=11;" value="&lt;b&gt;Mạch Khóa và Tạo Cờ Tràn Phút (min_rollover)&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#b71c1c&#39; style=&#39;font-size:10px;&#39;&gt;&lt;b&gt;min_rollover = (adj_mode == 2&#39;b00) &amp;amp;&amp;amp; sec_rollover &amp;amp;&amp;amp; (r_min == 59)&lt;/b&gt;&lt;br&gt;Khóa cứng về mức 0 khi ở chế độ cài đặt để cô lập tầng giờ.&lt;/font&gt;" vertex="1">
-          <mxGeometry height="75" width="460" x="235" y="315" as="geometry" />
+
+        <mxCell id="p_out_roll" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;min_rollover&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#2e7d32&#39;&gt;1-cycle pulse&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="110" x="870" y="160" as="geometry" />
         </mxCell>
-        <mxCell id="out_m" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#43a047;fontSize=11;" value="&lt;b&gt;m_out[5:0]&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#1b5e20&#39; style=&#39;font-size:10px;&#39;&gt;Phút: 0..59&lt;/font&gt;" vertex="1">
-          <mxGeometry height="55" width="165" x="780" y="140" as="geometry" />
-        </mxCell>
-        <mxCell id="out_roll" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#e53935;fontSize=11;" value="&lt;b&gt;min_rollover&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#b71c1c&#39; style=&#39;font-size:10px;&#39;&gt;1-cycle pulse&lt;/font&gt;" vertex="1">
-          <mxGeometry height="55" width="165" x="780" y="325" as="geometry" />
-        </mxCell>
-        <mxCell id="ec1" edge="1" parent="b_box" source="in_mode" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ffb300;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.12;entryDx=0;entryDy=0;" target="cnt_core">
+
+        <!-- Connections -->
+        <mxCell id="e1" edge="1" parent="b_box" source="p_in_grp" target="r_main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43a047;strokeWidth=2;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ec2" edge="1" parent="b_box" source="in_sec_roll" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ff7043;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.38;entryDx=0;entryDy=0;" target="cnt_core">
+        <mxCell id="e_snap" edge="1" parent="b_box" source="r_main" target="r_bak" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#fb8c00;strokeWidth=2;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ec3" edge="1" parent="b_box" source="in_up" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#039be5;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.63;entryDx=0;entryDy=0;" target="cnt_core">
+        <mxCell id="e_rollbk" edge="1" parent="b_box" source="r_bak" target="r_main" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#c2185b;strokeWidth=2;dashed=1;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ec4" edge="1" parent="b_box" source="in_down" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#039be5;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.88;entryDx=0;entryDy=0;" target="cnt_core">
+        <mxCell id="e2" edge="1" parent="b_box" source="r_main" target="b_comp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43a047;strokeWidth=2;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ec_out" edge="1" parent="b_box" source="cnt_core" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#43a047;strokeWidth=2.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="out_m">
+        <mxCell id="e3" edge="1" parent="b_box" source="r_main" target="p_out_m" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#e53935;strokeWidth=2.5;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="105" />
+              <mxPoint x="540" y="60" />
+              <mxPoint x="830" y="60" />
+              <mxPoint x="830" y="105" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="b_box" source="b_comp" target="p_out_roll" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43a047;strokeWidth=2;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="lbl_m_out_w" parent="b_box" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontColor=#1b5e20;fontStyle=1;fontSize=10;" value="m_out = r_min" vertex="1">
-          <mxGeometry height="20" width="85" x="695" y="145" as="geometry" />
-        </mxCell>
-        <mxCell id="ec_r1" edge="1" parent="b_box" source="cnt_core" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e53935;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="roll_logic">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="ec_r2" edge="1" parent="b_box" source="roll_logic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e53935;strokeWidth=2.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="out_roll">
-          <mxGeometry relative="1" as="geometry" />
+        
+        <mxCell id="clk_bus" parent="b_box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#cfd8dc;fontColor=#546e7a;fontSize=10;" value="clk (1 MHz) &amp;amp; rstn (Active-Low) cấp trực tiếp | Nét đứt: Rollback từ r_min_bak khi nhận cancel_pulse" vertex="1">
+          <mxGeometry height="25" width="650" x="210" y="350" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

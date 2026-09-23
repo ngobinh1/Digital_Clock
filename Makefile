@@ -21,7 +21,7 @@ RTL_DIR    = rtl
 TB_DIR     = tb
 
 # RTL Source Files
-RTL_SRCS   = $(RTL_DIR)/sync_edge_detector.sv \
+RTL_SRCS   = $(RTL_DIR)/button_debouncer.sv \
              $(RTL_DIR)/prescaler_1hz.sv \
              $(RTL_DIR)/mode_controller.sv \
              $(RTL_DIR)/second_counter.sv \

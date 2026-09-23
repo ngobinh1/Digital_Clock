@@ -1,0 +1,39 @@
+{
+  "signal": [
+    {
+      "name": "clk",
+      "wave": "p..................."
+    },
+    {
+      "name": "btn_in",
+      "wave": "010.1...............0"
+    },
+    {
+      "name": "sync_reg[0]",
+      "wave": "0.10.1..............0"
+    },
+    {
+      "name": "sync_reg[1] (btn_sync)",
+      "wave": "0..10.1.............0"
+    },
+    {
+      "name": "timer_cnt[14:0]",
+      "wave": "2..22.2======2======2",
+      "data": ["0", "1", "0", "0", "19999", "0", "19999", "0"]
+    },
+    {
+      "name": "btn_pulse",
+      "wave": "0............10.....10"
+    }
+  ],
+  "config": {
+    "hscale": 1.8
+  },
+  "head": {
+    "text": "Giản đồ 3.1.4: Khối button_debouncer - Đồng bộ 2-FF, Lọc nhiễu & Auto-Repeat",
+    "tick": 0
+  },
+  "foot": {
+    "text": "Lọc rung phím thô | Đếm đủ 20ms liên tục (19,999 cycles) phát xung 1 cycle | Tự đếm lại từ đầu"
+  }
+}

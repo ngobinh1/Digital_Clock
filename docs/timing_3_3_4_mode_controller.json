@@ -2,30 +2,43 @@
   "signal": [
     {
       "name": "clk",
-      "wave": "p.............."
+      "wave": "p..................."
     },
     {
       "name": "sel_pulse",
-      "wave": "0..10....10...."
+      "wave": "010...10............"
+    },
+    {
+      "name": "up_pulse",
+      "wave": "0...10.............."
+    },
+    {
+      "name": "sec_tick",
+      "wave": "0........10.10.10.10."
+    },
+    {
+      "name": "timeout_cnt",
+      "wave": "2...2.2..2..2..2..2.2",
+      "data": ["0", "0", "0", "1", "2", "3", "4", "0"]
     },
     {
       "name": "adj_mode[1:0]",
-      "wave": "=..=.....=.....",
-      "data": [
-        "2'b00 (MODE_RUN)",
-        "2'b01 (MODE_ADJ_SEC)",
-        "2'b10 (MODE_ADJ_MIN)"
-      ]
+      "wave": "2.3...4...........2.",
+      "data": ["RUN", "ADJ_SEC", "ADJ_MIN", "RUN"]
+    },
+    {
+      "name": "cancel_pulse",
+      "wave": "0.................10"
     }
   ],
   "config": {
-    "hscale": 2.5
+    "hscale": 1.8
   },
   "head": {
-    "text": "Gi\u1ea3n \u0111\u1ed3 3.3.4: mode_controller - Chuy\u1ec3n \u0111\u1ed5i tr\u1ea1ng th\u00e1i FSM Moore theo xung sel_pulse",
+    "text": "Giản đồ 3.3.4: Chuyển trạng thái FSM mode_controller & Timeout 5s về RUN",
     "tick": 0
   },
   "foot": {
-    "text": "M\u1ed7i xung sel_pulse \u0111\u01a1n k\u1ef3 k\u00edch ho\u1ea1t FSM chuy\u1ec3n sang ch\u1ebf \u0111\u1ed9 k\u1ebf ti\u1ebfp theo th\u1ee9 t\u1ef1 tu\u1ea7n ho\u00e0n 4 tr\u1ea1ng th\u00e1i"
+    "text": "Chuyển RUN->SEC->MIN qua sel_pulse | Tại MIN: Không bấm phím 5s (sec_tick) -> Tự về RUN & phát cancel_pulse"
   }
 }
