@@ -1,0 +1,14 @@
+{
+  "signal": [
+    {"name": "clk (1MHz)", "wave": "p..................."},
+    {"name": "rstn", "wave": "1..................."},
+    {"name": "r_cnt_1khz[9:0]", "wave": "=..=..=..=..=..=..=.", "data": ["0", "998", "999", "0", "1", "999", "0"]},
+    {"name": "sample_tick (1kHz)", "wave": "0....10.......10...."},
+    {"name": "r_cnt_1hz[19:0]", "wave": "=.............=...=.", "data": ["999998", "999999", "0"]},
+    {"name": "sec_tick (1Hz)", "wave": "0.............10...."}
+  ],
+  "head": {
+    "text": "clk_prescaler Timing: 1kHz Sample Tick & 1Hz Second Tick Generation from 1MHz",
+    "tick": 0
+  }
+}

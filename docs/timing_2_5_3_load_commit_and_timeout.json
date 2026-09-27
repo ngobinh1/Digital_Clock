@@ -1,0 +1,16 @@
+{
+  "signal": [
+    {"name": "clk (1MHz)", "wave": "p..................."},
+    {"name": "mode[1:0]", "wave": "=...=.....=...=.....", "data": ["RUN", "ADJ_HR", "RUN (Commit)", "ADJ_SEC", "RUN (Timeout)"]},
+    {"name": "sel_pulse", "wave": "0..10....0...0......"},
+    {"name": "load_en", "wave": "0....10......0......"},
+    {"name": "adj_sec[5:0]", "wave": "=............=......", "data": ["6'd30", "6'd45"]},
+    {"name": "cnt_sec[5:0] (bg)", "wave": "=....=.......=......", "data": ["6'd10", "6'd30", "6'd15"]},
+    {"name": "sec_out[5:0] (top)", "wave": "=...==.......==.....", "data": ["6'd10", "6'd30", "6'd30", "6'd45", "6'd15"]},
+    {"name": "inactivity_cnt[2:0]", "wave": "0............=....0.", "data": ["5s Timeout"]}
+  ],
+  "head": {
+    "text": "HMS_Timer Timing: Load Commit (load_en=1) vs Inactivity Timeout 5s (load_en=0, Zero-Drift)",
+    "tick": 0
+  }
+}

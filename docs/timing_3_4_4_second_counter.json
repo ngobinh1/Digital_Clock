@@ -1,45 +1,15 @@
 {
   "signal": [
-    {
-      "name": "clk",
-      "wave": "p..................."
-    },
-    {
-      "name": "adj_mode",
-      "wave": "2.3...............2.",
-      "data": ["RUN", "ADJ_SEC", "RUN"]
-    },
-    {
-      "name": "sel_pulse",
-      "wave": "010................."
-    },
-    {
-      "name": "up_pulse",
-      "wave": "0..10.10............"
-    },
-    {
-      "name": "cancel_pulse",
-      "wave": "0.................10"
-    },
-    {
-      "name": "r_sec_bak[5:0]",
-      "wave": "2.======............",
-      "data": ["0", "58", "58"]
-    },
-    {
-      "name": "s_out[5:0]",
-      "wave": "2.====2=..........=2",
-      "data": ["58", "58", "59", "0", "0", "58"]
-    }
+    {"name": "clk (1MHz)", "wave": "p..................."},
+    {"name": "sec_tick", "wave": "0.10......10...0...."},
+    {"name": "load_en", "wave": "0...........0..10..."},
+    {"name": "adj_sec[5:0]", "wave": "=..............=....", "data": ["6'd0", "6'd42"]},
+    {"name": "r_sec[5:0]", "wave": "=..=.......=....=...", "data": ["6'd58", "6'd59", "6'd00", "6'd42"]},
+    {"name": "sec_rollover", "wave": "0..........10..0...."},
+    {"name": "en_sec (ICG)", "wave": "0.10......10...10..."}
   ],
-  "config": {
-    "hscale": 1.8
-  },
   "head": {
-    "text": "Giản đồ 3.4.4: second_counter - Chốt Snapshot, Chỉnh Wrap-Around & Rollback",
+    "text": "second_counter Timing: Real-Time Incrementation, sec_rollover Generation, and Synchronous Parallel Load",
     "tick": 0
-  },
-  "foot": {
-    "text": "Chốt r_sec_bak=58 | Chỉnh 58->59->00 (Wrap) | Nhận cancel_pulse -> Rollback s_out về 58"
   }
 }

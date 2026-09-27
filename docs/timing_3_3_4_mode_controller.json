@@ -1,44 +1,16 @@
 {
   "signal": [
-    {
-      "name": "clk",
-      "wave": "p..................."
-    },
-    {
-      "name": "sel_pulse",
-      "wave": "010...10............"
-    },
-    {
-      "name": "up_pulse",
-      "wave": "0...10.............."
-    },
-    {
-      "name": "sec_tick",
-      "wave": "0........10.10.10.10."
-    },
-    {
-      "name": "timeout_cnt",
-      "wave": "2...2.2..2..2..2..2.2",
-      "data": ["0", "0", "0", "1", "2", "3", "4", "0"]
-    },
-    {
-      "name": "adj_mode[1:0]",
-      "wave": "2.3...4...........2.",
-      "data": ["RUN", "ADJ_SEC", "ADJ_MIN", "RUN"]
-    },
-    {
-      "name": "cancel_pulse",
-      "wave": "0.................10"
-    }
+    {"name": "clk (1MHz)", "wave": "p..................."},
+    {"name": "sel_pulse", "wave": "0.10..10..10..10...."},
+    {"name": "up_pulse", "wave": "0...10..10.........."},
+    {"name": "mode[1:0]", "wave": "=..=...=...=...=....", "data": ["RUN", "ADJ_SEC", "ADJ_MIN", "ADJ_HR", "RUN"]},
+    {"name": "adj_sec[5:0]", "wave": "=...=...............", "data": ["6'd0", "6'd1"]},
+    {"name": "adj_min[5:0]", "wave": "=.......=...........", "data": ["6'd0", "6'd1"]},
+    {"name": "load_en (1-cycle)", "wave": "0..............10..."},
+    {"name": "en_fsm", "wave": "0.101010101010110..."}
   ],
-  "config": {
-    "hscale": 1.8
-  },
   "head": {
-    "text": "Giản đồ 3.3.4: Chuyển trạng thái FSM mode_controller & Timeout 5s về RUN",
+    "text": "mode_controller Timing: FSM Mode Transitions, Buffer Adjustment, and 1-Cycle load_en Commit",
     "tick": 0
-  },
-  "foot": {
-    "text": "Chuyển RUN->SEC->MIN qua sel_pulse | Tại MIN: Không bấm phím 5s (sec_tick) -> Tự về RUN & phát cancel_pulse"
   }
 }

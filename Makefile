@@ -21,12 +21,16 @@ RTL_DIR    = rtl
 TB_DIR     = tb
 
 # RTL Source Files
-RTL_SRCS   = $(RTL_DIR)/button_debouncer.sv \
-             $(RTL_DIR)/prescaler_1hz.sv \
+RTL_SRCS   = $(RTL_DIR)/icg_cell.sv \
+             $(RTL_DIR)/clock_control_unit.sv \
+             $(RTL_DIR)/clk_prescaler.sv \
+             $(RTL_DIR)/button_debouncer.sv \
+             $(RTL_DIR)/button_controller.sv \
              $(RTL_DIR)/mode_controller.sv \
              $(RTL_DIR)/second_counter.sv \
              $(RTL_DIR)/minute_counter.sv \
              $(RTL_DIR)/hour_counter.sv \
+             $(RTL_DIR)/output_switch.sv \
              $(RTL_DIR)/hms_timer.sv
 
 # Testbench Source Files

@@ -1,42 +1,15 @@
 {
   "signal": [
-    {
-      "name": "clk (1 MHz)",
-      "wave": "p..................."
-    },
-    {
-      "name": "btn_in (Nhiễu / Thô)",
-      "wave": "01010.1.............0",
-      "node": "..a...b.............c"
-    },
-    {
-      "name": "btn_sync (2-FF)",
-      "wave": "0..10.01............0"
-    },
-    {
-      "name": "timer_cnt",
-      "wave": "2..22.2======2======2",
-      "data": ["0", "1", "0", "0", "0..19999", "0", "0..19999", "0"]
-    },
-    {
-      "name": "btn_pulse",
-      "wave": "0............10.....10",
-      "node": ".............d......e"
-    }
+    {"name": "clk (1MHz)", "wave": "p..................."},
+    {"name": "sample_tick (1kHz)", "wave": "01010101010101010101"},
+    {"name": "btn_in (async)", "wave": "0.101.1............."},
+    {"name": "sync_q2", "wave": "0...1..............."},
+    {"name": "debounce_cnt[4:0]", "wave": "=...=======...=======", "data": ["0", "1", "2", "...", "17", "18", "0", "1", "...", "17", "18"]},
+    {"name": "btn_pulse (1-cycle)", "wave": "0..........10.......10"},
+    {"name": "en_fsm / ICG", "wave": "0..........10.......10"}
   ],
-  "edge": [
-    "a~>b Lọc nhiễu <20ms",
-    "b~>d Giữ đủ 20ms",
-    "d~>e Auto-Repeat (+20ms)"
-  ],
-  "config": {
-    "hscale": 1.8
-  },
   "head": {
-    "text": "Giản đồ 2.5.2: Khử rung phím 20ms (Debouncing) & Tự động lặp lại (Auto-Repeat)",
+    "text": "HMS_Timer Timing: Button Debounce (18ms = 20ms - 10%) & Auto-Repeat Stream",
     "tick": 0
-  },
-  "foot": {
-    "text": "Nhiễu <20ms bị loại bỏ hoàn toàn | Giữ liên tục 20ms phát 1 xung | Tiếp tục giữ: Phát xung lặp lại định kỳ mỗi 20ms"
   }
 }

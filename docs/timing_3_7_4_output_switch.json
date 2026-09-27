@@ -1,0 +1,13 @@
+{
+  "signal": [
+    {"name": "clk (1MHz)", "wave": "p..................."},
+    {"name": "mode[1:0]", "wave": "=...=.....=.....=...", "data": ["MODE_RUN (00)", "MODE_ADJ_SEC (01)", "MODE_ADJ_MIN (10)", "MODE_RUN (00)"]},
+    {"name": "cnt_time {h,m,s}", "wave": "=...................", "data": ["10:15:20 (Background Time)"]},
+    {"name": "adj_time {h,m,s}", "wave": "....=.....=.........", "data": ["10:15:45", "10:30:45"]},
+    {"name": "time_hms {h,m,s}", "wave": "=...=.....=.....=...", "data": ["10:15:20 (cnt)", "10:15:45 (adj)", "10:30:45 (adj)", "10:15:20 (cnt)"]}
+  ],
+  "head": {
+    "text": "output_switch Timing: Combinational Zero-Latency Display Switching (cnt_time vs adj_time)",
+    "tick": 0
+  }
+}

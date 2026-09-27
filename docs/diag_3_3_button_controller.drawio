@@ -1,0 +1,117 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="diag_button_controller_bw">
+    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="420" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- CENTER MODULE BOX -->
+        <mxCell id="box_module" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontFamily=Helvetica;fontSize=18;fontStyle=1;fontColor=#000000;align=center;verticalAlign=middle;" value="button_controller" vertex="1">
+          <mxGeometry height="300" width="240" x="280" y="60" as="geometry" />
+        </mxCell>
+
+        <!-- INPUT ARROWS (LEFT TO RIGHT INTO BOX) -->
+        <!-- In 1: clk -->
+        <mxCell id="in_clk_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="clk" vertex="1">
+          <mxGeometry height="20" width="130" x="140" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="in_clk_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="90" as="sourcePoint" />
+            <mxPoint x="280" y="90" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- In 2: rstn -->
+        <mxCell id="in_rstn_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="rstn" vertex="1">
+          <mxGeometry height="20" width="130" x="140" y="105" as="geometry" />
+        </mxCell>
+        <mxCell id="in_rstn_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="135" as="sourcePoint" />
+            <mxPoint x="280" y="135" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- In 3: gated_clk_1khz -->
+        <mxCell id="in_g1k_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="gated_clk_1khz" vertex="1">
+          <mxGeometry height="20" width="130" x="140" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="in_g1k_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="180" as="sourcePoint" />
+            <mxPoint x="280" y="180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- In 4: sel_in -->
+        <mxCell id="in_sel_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="sel_in" vertex="1">
+          <mxGeometry height="20" width="130" x="140" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="in_sel_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="225" as="sourcePoint" />
+            <mxPoint x="280" y="225" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- In 5: up_in -->
+        <mxCell id="in_up_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="up_in" vertex="1">
+          <mxGeometry height="20" width="130" x="140" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="in_up_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="270" as="sourcePoint" />
+            <mxPoint x="280" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- In 6: down_in -->
+        <mxCell id="in_down_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="down_in" vertex="1">
+          <mxGeometry height="20" width="130" x="140" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="in_down_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="315" as="sourcePoint" />
+            <mxPoint x="280" y="315" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- OUTPUT ARROWS (FROM BOX TO RIGHT) -->
+        <!-- Out 1: sel_pulse -->
+        <mxCell id="out_sel_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="sel_pulse" vertex="1">
+          <mxGeometry height="20" width="130" x="530" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="out_sel_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="145" as="sourcePoint" />
+            <mxPoint x="660" y="145" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Out 2: up_pulse -->
+        <mxCell id="out_up_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="up_pulse" vertex="1">
+          <mxGeometry height="20" width="130" x="530" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="out_up_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="210" as="sourcePoint" />
+            <mxPoint x="660" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Out 3: down_pulse -->
+        <mxCell id="out_down_lbl" parent="1" style="text;html=1;align=center;verticalAlign=bottom;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" value="down_pulse" vertex="1">
+          <mxGeometry height="20" width="130" x="530" y="245" as="geometry" />
+        </mxCell>
+        <mxCell id="out_down_arr" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=classic;endFill=1;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="275" as="sourcePoint" />
+            <mxPoint x="660" y="275" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

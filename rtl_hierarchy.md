@@ -1,4 +1,4 @@
-# RTL Module Hierarchy & Interconnect Matrix (v1.1.0)
+# RTL Module Hierarchy & Interconnect Matrix (v2.3.0 Output Switch & Zero-Drift Clock)
 
 ## 1. Top-Level Module: `hms_timer`
 
@@ -6,11 +6,12 @@
 | Parameter | Default Value | Description |
 | :--- | :---: | :--- |
 | `CLK_FREQ_HZ` | `1_000_000` | System clock frequency (1 MHz) |
-| `PSC_COUNT_MAX` | `CLK_FREQ_HZ - 1` | Prescaler terminal count ($10^6 - 1$) |
-| `PSC_WIDTH` | `20` | Bit width of prescaler counter |
-| `DEBOUNCE_TIME_MS` | `20` | Button debounce hold time in ms (Default 20ms) |
-| `DEBOUNCE_CYCLES` | `(CLK_FREQ_HZ / 1000) * DEBOUNCE_TIME_MS` | Debounce counter terminal count (20,000 cycles) |
-| `DEBOUNCE_WIDTH` | `15` | Bit width of debounce counter ($clog2(20,000) = 15$) |
+| `TICK_1KHZ_FREQ_HZ` | `1_000` | 1 kHz sampling rate frequency |
+| `TICK_1HZ_FREQ_HZ` | `1` | 1 Hz real-time timebase frequency |
+| `DIV_1KHZ_MAX` | `(CLK_FREQ_HZ / 1000) - 1` | Prescaler stage 1 terminal count (999) |
+| `DIV_1HZ_MAX` | `(1000 / 1) - 1` | Prescaler stage 2 terminal count (999) |
+| `DEBOUNCE_TICKS` | `20` | Nominal debounce threshold in 1 kHz ticks (20 ticks = 20ms) |
+| `DEBOUNCE_TOL_PCT`| `10` | Debounce tolerance percentage ($\pm 10\% \rightarrow 18\text{ ms} \dots 22\text{ ms}$) |
 | `TIMEOUT_SEC` | `5` | Inactivity timeout threshold in seconds (Default 5s) |
 | `SEC_WIDTH` | `6` | Bit width of second counter ($0 \dots 59$) |
 | `MIN_WIDTH` | `6` | Bit width of minute counter ($0 \dots 59$) |
@@ -19,44 +20,53 @@
 ### 1.2 Top-Level I/O Ports
 | Port Name | Direction | Width | Type | Description |
 | :--- | :---: | :---: | :---: | :--- |
-| `clk` | Input | 1 | Clock | 1 MHz synchronous system clock |
+| `clk` | Input | 1 | Clock | 1 MHz synchronous master clock |
 | `rstn` | Input | 1 | Reset | Asynchronous active-low reset |
-| `sel_in` | Input | 1 | Async Control | Mode select button input (20ms debounce) |
-| `up_in` | Input | 1 | Async Control | Increment button input (20ms debounce) |
-| `down_in` | Input | 1 | Async Control | Decrement button input (20ms debounce) |
-| `h_out` | Output | 5 | Data Out | Real-time hours ($0 \dots 23$) |
-| `m_out` | Output | 6 | Data Out | Real-time minutes ($0 \dots 59$) |
-| `s_out` | Output | 6 | Data Out | Real-time seconds ($0 \dots 59$) |
+| `test_mode` | Input | 1 | DFT/Scan | DFT/Scan test mode bypass (forces ICGs transparent) |
+| `sel_in` | Input | 1 | Async Control | Mode select button input (20ms ±10% debounce) |
+| `up_in` | Input | 1 | Async Control | Increment button input (20ms ±10% debounce) |
+| `down_in` | Input | 1 | Async Control | Decrement button input (20ms ±10% debounce) |
+| `h_out` | Output | 5 | Data Out | Display hours ($0 \dots 23$) |
+| `m_out` | Output | 6 | Data Out | Display minutes ($0 \dots 59$) |
+| `s_out` | Output | 6 | Data Out | Display seconds ($0 \dots 59$) |
 
 ---
 
 ## 2. Sub-module Hierarchy Tree
 
 ```text
-hms_timer (Top)
-├── u_debouncer_sel       [button_debouncer.sv]
-│   ├── sync_reg[1:0]      (2-FF Synchronizer)
-│   └── timer_cnt[14:0]    (20ms Debounce & Auto-Repeat Counter)
-├── u_debouncer_up        [button_debouncer.sv]
-│   ├── sync_reg[1:0]      (2-FF Synchronizer)
-│   └── timer_cnt[14:0]    (20ms Debounce & Auto-Repeat Counter)
-├── u_debouncer_down      [button_debouncer.sv]
-│   ├── sync_reg[1:0]      (2-FF Synchronizer)
-│   └── timer_cnt[14:0]    (20ms Debounce & Auto-Repeat Counter)
-├── u_prescaler_1hz       [prescaler_1hz.sv]
-│   └── r_count[19:0]      (Modulo-1,000,000 Prescaler Counter)
-├── u_mode_controller     [mode_controller.sv]
-│   ├── state_reg[1:0]     (4-State FSM: RUN, ADJ_SEC, ADJ_MIN, ADJ_HOUR)
-│   └── timeout_cnt[2:0]   (5-Second Inactivity Timer -> cancel_pulse)
-├── u_second_counter      [second_counter.sv]
-│   ├── r_sec[5:0]         (Modulo-60 Counter + Gated Rollover Flag)
-│   └── r_sec_bak[5:0]     (Snapshot Shadow Register for Rollback)
-├── u_minute_counter      [minute_counter.sv]
-│   ├── r_min[5:0]         (Modulo-60 Counter + Gated Rollover Flag)
-│   └── r_min_bak[5:0]     (Snapshot Shadow Register for Rollback)
-└── u_hour_counter        [hour_counter.sv]
-    ├── r_hour[4:0]        (Modulo-24 Counter)
-    └── r_hour_bak[4:0]    (Snapshot Shadow Register for Rollback)
+hms_timer (Top - v2.3.0 Output Switch & Zero-Drift Clock)
+├── u_clock_control_unit   [clock_control_unit.sv - Centralized Clock Management & Glitch-Free ICG Unit]
+│   ├── u_icg_1khz          (icg_cell for 1kHz Domain)
+│   ├── u_icg_sec           (icg_cell for Second Counter: 1 toggle/s / Load)
+│   ├── u_icg_min           (icg_cell for Minute Counter: 1 toggle/60s / Load)
+│   ├── u_icg_hour          (icg_cell for Hour Counter: 1 toggle/3600s / Load)
+│   └── u_icg_fsm           (icg_cell for Mode Controller FSM)
+├── u_clk_prescaler        [clk_prescaler.sv - 2-Stage Cascaded Frequency Divider]
+│   ├── r_cnt_1khz[9:0]     (Stage 1: Modulo-1000, 1 MHz -> 1 kHz tick_1khz)
+│   └── r_cnt_1hz[9:0]      (Stage 2: Modulo-1000 clocked on 1 MHz, enabled by tick_1khz -> 1 Hz sec_tick)
+├── u_button_controller   [button_controller.sv - Multi-Channel Button Controller & Pulse Alignment]
+│   ├── u_debouncer_sel     (button_debouncer for sel_in)
+│   ├── u_debouncer_up      (button_debouncer for up_in)
+│   ├── u_debouncer_down    (button_debouncer for down_in)
+│   └── always_ff           (1 MHz Single-Cycle Edge Alignment)
+├── u_mode_controller      [mode_controller.sv - Clocked by gated_clk_fsm]
+│   ├── state_reg[1:0]      (4-State FSM: RUN, ADJ_SEC, ADJ_MIN, ADJ_HOUR)
+│   ├── timeout_cnt[2:0]    (5-Second Inactivity Timer -> auto-exit without load_en)
+│   ├── r_adj_sec[5:0]      (Edit Buffer: Second)
+│   ├── r_adj_min[5:0]      (Edit Buffer: Minute)
+│   ├── r_adj_hour[4:0]     (Edit Buffer: Hour)
+│   └── r_load_en           (1-cycle Commit Pulse to load counters)
+├── u_second_counter       [second_counter.sv - Continuous Background Counter clocked by gated_clk_sec]
+│   └── r_sec[5:0]          (Modulo-60 Counter with Synchronous Load)
+├── u_minute_counter       [minute_counter.sv - Continuous Background Counter clocked by gated_clk_min]
+│   └── r_min[5:0]          (Modulo-60 Counter with Synchronous Load)
+├── u_hour_counter         [hour_counter.sv - Continuous Background Counter clocked by gated_clk_hour]
+│   └── r_hour[4:0]         (Modulo-24 Counter with Synchronous Load)
+└── u_output_switch        [output_switch.sv - Combinational Display Multiplexer]
+    ├── Second MUX (s_out = (RUN) ? s_cnt : adj_sec)
+    ├── Minute MUX (m_out = (RUN) ? m_cnt : adj_min)
+    └── Hour MUX   (h_out = (RUN) ? h_cnt : adj_hour)
 ```
 
 ---
@@ -65,11 +75,23 @@ hms_timer (Top)
 
 | Internal Signal | Width | Driver Module | Receiver Module(s) | Function |
 | :--- | :---: | :--- | :--- | :--- |
-| `sel_pulse` | 1 | `u_debouncer_sel` | `u_mode_controller`, `u_second_counter`, `u_minute_counter`, `u_hour_counter` | 1-cycle active-high pulse on 20ms held `sel_in` |
-| `up_pulse` | 1 | `u_debouncer_up` | `u_mode_controller`, `u_second_counter`, `u_minute_counter`, `u_hour_counter` | 1-cycle active-high pulse on 20ms held `up_in` |
-| `down_pulse` | 1 | `u_debouncer_down` | `u_mode_controller`, `u_second_counter`, `u_minute_counter`, `u_hour_counter` | 1-cycle active-high pulse on 20ms held `down_in` |
-| `sec_tick` | 1 | `u_prescaler_1hz` | `u_second_counter`, `u_mode_controller` | 1 Hz periodic 1-cycle time base pulse |
-| `adj_mode[1:0]` | 2 | `u_mode_controller` | `u_second_counter`, `u_minute_counter`, `u_hour_counter` | FSM mode indicator |
-| `cancel_pulse` | 1 | `u_mode_controller` | `u_second_counter`, `u_minute_counter`, `u_hour_counter` | 1-cycle pulse triggered by 5s inactivity timeout to rollback |
-| `sec_rollover` | 1 | `u_second_counter` | `u_minute_counter` | 1-cycle pulse when $r\_sec == 59 \land sec\_tick \land RUN$ |
-| `min_rollover` | 1 | `u_minute_counter` | `u_hour_counter` | 1-cycle pulse when $r\_min == 59 \land sec\_rollover \land RUN$ |
+| `gated_clk_1khz` | 1 | `u_clock_control_unit` | `u_button_controller` | Gated clock for 1 kHz domain |
+| `gated_clk_sec` | 1 | `u_clock_control_unit` | `u_second_counter` | Gated clock for second counter (1 toggle/s in RUN / load) |
+| `gated_clk_min` | 1 | `u_clock_control_unit` | `u_minute_counter` | Gated clock for minute counter (1 toggle/60s in RUN / load) |
+| `gated_clk_hour` | 1 | `u_clock_control_unit` | `u_hour_counter` | Gated clock for hour counter (1 toggle/3600s in RUN / load) |
+| `gated_clk_fsm` | 1 | `u_clock_control_unit` | `u_mode_controller` | Gated clock for FSM mode controller |
+| `tick_1khz` | 1 | `u_clk_prescaler` | `u_clock_control_unit` | 1-cycle active-high pulse every 1ms (1 kHz) for debounce sampling |
+| `sec_tick` | 1 | `u_clk_prescaler` | `u_clock_control_unit`, `u_second_counter`, `u_mode_controller` | 1-cycle active-high pulse every 1s (1 Hz) |
+| `sel_pulse` | 1 | `u_button_controller` | `u_mode_controller`, `u_clock_control_unit` | 1-cycle pulse from debounced sel button |
+| `up_pulse` | 1 | `u_button_controller` | `u_mode_controller`, `u_clock_control_unit` | 1-cycle pulse from debounced up button |
+| `down_pulse` | 1 | `u_button_controller` | `u_mode_controller`, `u_clock_control_unit` | 1-cycle pulse from debounced down button |
+| `adj_mode[1:0]` | 2 | `u_mode_controller` | `u_output_switch` | Current operating mode state |
+| `load_en` | 1 | `u_mode_controller` | `u_second_counter`, `u_minute_counter`, `u_hour_counter`, `u_clock_control_unit` | 1-cycle commit pulse to parallel load edit buffer into counters |
+| `adj_sec[5:0]` | 6 | `u_mode_controller` | `u_output_switch`, `u_second_counter` | Second value in edit buffer |
+| `adj_min[5:0]` | 6 | `u_mode_controller` | `u_output_switch`, `u_minute_counter` | Minute value in edit buffer |
+| `adj_hour[4:0]` | 5 | `u_mode_controller` | `u_output_switch`, `u_hour_counter` | Hour value in edit buffer |
+| `s_cnt[5:0]` | 6 | `u_second_counter` | `u_output_switch`, `u_mode_controller` | Real-time second from background counter |
+| `m_cnt[5:0]` | 6 | `u_minute_counter` | `u_output_switch`, `u_mode_controller` | Real-time minute from background counter |
+| `h_cnt[4:0]` | 5 | `u_hour_counter` | `u_output_switch`, `u_mode_controller` | Real-time hour from background counter |
+| `sec_rollover` | 1 | `u_second_counter` | `u_minute_counter`, `u_clock_control_unit` | 1-cycle rollover pulse when $s\_cnt == 59 \land sec\_tick$ |
+| `min_rollover` | 1 | `u_minute_counter` | `u_hour_counter`, `u_clock_control_unit` | 1-cycle rollover pulse when $m\_cnt == 59 \land sec\_rollover$ |

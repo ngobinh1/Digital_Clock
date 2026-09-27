@@ -1,58 +1,23 @@
 {
   "signal": [
-    {
-      "name": "clk",
-      "wave": "p................."
-    },
-    {
-      "name": "rstn",
-      "wave": "0.1..............."
-    },
-    {
-      "name": "adj_mode[1:0]",
-      "wave": "=..=..=..=..=..=..",
-      "data": [
-        "2'b00 (MODE_RUN)",
-        "2'b00 (MODE_RUN)",
-        "2'b00 (MODE_RUN)"
-      ]
-    },
-    {
-      "name": "sec_tick",
-      "wave": "0....10.......10.."
-    },
-    {
-      "name": "s_out[5:0]",
-      "wave": "=....==.......==..",
-      "data": [
-        "6'd0",
-        "6'd1",
-        "6'd59",
-        "6'd0"
-      ]
-    },
-    {
-      "name": "sec_rollover",
-      "wave": "0..............10."
-    },
-    {
-      "name": "m_out[5:0]",
-      "wave": "=..............==.",
-      "data": [
-        "6'd0",
-        "6'd1"
-      ]
-    }
+    {"name": "clk (1MHz)", "wave": "p..................."},
+    {"name": "rstn", "wave": "1..................."},
+    {"name": "mode[1:0]", "wave": "=...................", "data": ["2'b00 (MODE_RUN)"]},
+    {"name": "sec_tick (1Hz)", "wave": "0..10.........10...."},
+    {"name": "cnt_sec[5:0]", "wave": "=..=..........=.....", "data": ["6'd58", "6'd59", "6'd00"]},
+    {"name": "sec_rollover", "wave": "0.............10...."},
+    {"name": "cnt_min[5:0]", "wave": "=.............=.....", "data": ["6'd59", "6'd00"]},
+    {"name": "min_rollover", "wave": "0.............10...."},
+    {"name": "cnt_hour[4:0]", "wave": "=.............=.....", "data": ["5'd23", "5'd00"]},
+    {"name": "sec_out[5:0]", "wave": "=..=..........=.....", "data": ["6'd58", "6'd59", "6'd00"]},
+    {"name": "min_out[5:0]", "wave": "=.............=.....", "data": ["6'd59", "6'd00"]},
+    {"name": "hour_out[4:0]", "wave": "=.............=.....", "data": ["5'd23", "5'd00"]}
   ],
-  "config": {
-    "hscale": 2.2
-  },
   "head": {
-    "text": "Gi\u1ea3n \u0111\u1ed3 2.5.1: Kh\u1edfi \u0111\u1ed9ng Reset & Ch\u1ebf \u0111\u1ed9 \u0110\u1ebfm Th\u1eddi gian Th\u1ef1c (Normal Run Mode)",
+    "text": "HMS_Timer Timing: Normal 1Hz Run and Midnight Cascade Rollover (23:59:59 -> 00:00:00)",
     "tick": 0
   },
-  "foot": {
-    "text": "Chu k\u1ef3: T0 (Reset) -> T1 (Ch\u1ea1y) -> T999999 (sec_tick t\u1ea1o xung nh\u1ecbp 1s) -> T59999999 (sec_rollover tr\u00e0n sang ph\u00fat)",
-    "tock": 0
+  "config": {
+    "hscale": 1
   }
 }

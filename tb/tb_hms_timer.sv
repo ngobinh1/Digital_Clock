@@ -53,34 +53,43 @@ module tb_hms_timer;
 
     // DUT Instantiation with fast prescaler parameter for testbench execution
     hms_timer #(
-        .CLK_FREQ_HZ      (SIM_CLK_FREQ_HZ),
-        .PSC_COUNT_MAX    (SIM_PSC_COUNT_MAX),
-        .PSC_WIDTH        (SIM_PSC_WIDTH),
-        .DEBOUNCE_TIME_MS (20), // At 100Hz, DEBOUNCE_CYCLES = (100*20)/1000 = 2 cycles
-        .TIMEOUT_SEC      (5),
-        .SEC_WIDTH        (6),
-        .MIN_WIDTH        (6),
-        .HOUR_WIDTH       (5)
+        .CLK_FREQ_HZ       (SIM_CLK_FREQ_HZ),
+        .TICK_1KHZ_FREQ_HZ (100),
+        .TICK_1HZ_FREQ_HZ  (1),
+        .DIV_1KHZ_MAX      (0),
+        .DIV_1HZ_MAX       (SIM_PSC_COUNT_MAX),
+        .DEBOUNCE_TICKS    (20), // 20 ticks nominal of sampling clock
+        .DEBOUNCE_TOL_PCT  (10), // ±10% tolerance -> EFFECTIVE_TICKS = 18
+        .TIMEOUT_SEC       (5),
+        .SEC_WIDTH         (6),
+        .MIN_WIDTH         (6),
+        .HOUR_WIDTH        (5)
     ) dut (
-        .clk     (vif.clk),
-        .rstn    (vif.rstn),
-        .sel_in  (vif.sel_in),
-        .up_in   (vif.up_in),
-        .down_in (vif.down_in),
-        .h_out   (vif.h_out),
-        .m_out   (vif.m_out),
-        .s_out   (vif.s_out)
+        .clk       (vif.clk),
+        .rstn      (vif.rstn),
+        .test_mode (1'b0),
+        .sel_in    (vif.sel_in),
+        .up_in     (vif.up_in),
+        .down_in   (vif.down_in),
+        .h_out     (vif.h_out),
+        .m_out     (vif.m_out),
+        .s_out     (vif.s_out)
     );
 
     // Bind internal probes to interface for verification visibility
-    assign vif.sel_pulse    = dut.sel_pulse;
-    assign vif.up_pulse     = dut.up_pulse;
-    assign vif.down_pulse   = dut.down_pulse;
-    assign vif.sec_tick     = dut.sec_tick;
-    assign vif.adj_mode     = dut.adj_mode;
-    assign vif.cancel_pulse = dut.cancel_pulse;
-    assign vif.sec_rollover = dut.sec_rollover;
-    assign vif.min_rollover = dut.min_rollover;
+    assign vif.tick_1khz      = dut.tick_1khz;
+    assign vif.gated_clk_1khz = dut.gated_clk_1khz;
+    assign vif.gated_clk_sec  = dut.gated_clk_sec;
+    assign vif.gated_clk_min  = dut.gated_clk_min;
+    assign vif.gated_clk_hour = dut.gated_clk_hour;
+    assign vif.sel_pulse      = dut.sel_pulse;
+    assign vif.up_pulse       = dut.up_pulse;
+    assign vif.down_pulse     = dut.down_pulse;
+    assign vif.sec_tick       = dut.sec_tick;
+    assign vif.adj_mode       = dut.adj_mode;
+    assign vif.load_en        = dut.load_en;
+    assign vif.sec_rollover   = dut.sec_rollover;
+    assign vif.min_rollover   = dut.min_rollover;
 
     // Testbench OOP Components
     hms_driver     driver;
@@ -126,19 +135,19 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // Mode 00 -> Mode 01 (ADJ_SEC)
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC3_TRANSITION_TO_SEC");
 
         // Mode 01 -> Mode 10 (ADJ_MIN)
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_MIN, "TC3_TRANSITION_TO_MIN");
 
         // Mode 10 -> Mode 11 (ADJ_HOUR)
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_HOUR, "TC3_TRANSITION_TO_HOUR");
 
         // Mode 11 -> Mode 00 (RUN)
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_RUN, "TC3_TRANSITION_TO_RUN");
     endtask
 
@@ -150,32 +159,32 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // Enter ADJ_SEC mode: RUN (00) -> ADJ_SEC (01)
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC4_ENTER_SEC_ADJ");
         scoreboard.check_time(0, 0, 0, "TC4_SEC_INIT_ZERO");
 
         // Test Up button increments
         log_info("Testing Second Increment (Up)...");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 1, "TC4_SEC_UP_1");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 2, "TC4_SEC_UP_2");
 
         // Test Down button decrements
         log_info("Testing Second Decrement (Down)...");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(0, 0, 1, "TC4_SEC_DOWN_1");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(0, 0, 0, "TC4_SEC_DOWN_2");
 
         // Down from 0 -> Wrap to 59
         log_info("Testing Wrap-down (0 -> 59)...");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(0, 0, 59, "TC4_SEC_WRAP_DOWN_59");
 
         // Up from 59 -> Wrap to 0
         log_info("Testing Wrap-up (59 -> 0)...");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 0, "TC4_SEC_WRAP_UP_0");
     endtask
 
@@ -187,33 +196,33 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // Navigate to ADJ_MIN: RUN -> SEC -> MIN
-        driver.pulse_sel(3, 4); // RUN -> SEC
-        driver.pulse_sel(3, 4); // SEC -> MIN
+        driver.pulse_sel(); // RUN -> SEC
+        driver.pulse_sel(); // SEC -> MIN
         scoreboard.check_mode(MODE_ADJ_MIN, "TC5_ENTER_MIN_ADJ");
         scoreboard.check_time(0, 0, 0, "TC5_MIN_INIT_ZERO");
 
         // Increment Minute
         log_info("Testing Minute Increment (Up)...");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 1, 0, "TC5_MIN_UP_1");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 2, 0, "TC5_MIN_UP_2");
 
         // Decrement Minute
         log_info("Testing Minute Decrement (Down)...");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(0, 1, 0, "TC5_MIN_DOWN_1");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(0, 0, 0, "TC5_MIN_DOWN_2");
 
         // Decrement from 0 -> Wrap to 59
         log_info("Testing Minute Wrap-down (0 -> 59)...");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(0, 59, 0, "TC5_MIN_WRAP_DOWN_59");
 
         // Increment from 59 -> Wrap to 0
         log_info("Testing Minute Wrap-up (59 -> 0)...");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 0, "TC5_MIN_WRAP_UP_0");
     endtask
 
@@ -225,34 +234,34 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // Navigate to ADJ_HOUR: RUN -> SEC -> MIN -> HOUR
-        driver.pulse_sel(3, 4); // RUN -> SEC
-        driver.pulse_sel(3, 4); // SEC -> MIN
-        driver.pulse_sel(3, 4); // MIN -> HOUR
+        driver.pulse_sel(); // RUN -> SEC
+        driver.pulse_sel(); // SEC -> MIN
+        driver.pulse_sel(); // MIN -> HOUR
         scoreboard.check_mode(MODE_ADJ_HOUR, "TC6_ENTER_HOUR_ADJ");
         scoreboard.check_time(0, 0, 0, "TC6_HOUR_INIT_ZERO");
 
         // Increment Hour
         log_info("Testing Hour Increment (Up)...");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(1, 0, 0, "TC6_HOUR_UP_1");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(2, 0, 0, "TC6_HOUR_UP_2");
 
         // Decrement Hour
         log_info("Testing Hour Decrement (Down)...");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(1, 0, 0, "TC6_HOUR_DOWN_1");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(0, 0, 0, "TC6_HOUR_DOWN_2");
 
         // Decrement from 0 -> Wrap to 23
         log_info("Testing Hour Wrap-down (0 -> 23)...");
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(23, 0, 0, "TC6_HOUR_WRAP_DOWN_23");
 
         // Increment from 23 -> Wrap to 0
         log_info("Testing Hour Wrap-up (23 -> 0)...");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 0, "TC6_HOUR_WRAP_UP_0");
     endtask
 
@@ -264,27 +273,27 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // Enter ADJ_SEC mode: RUN -> ADJ_SEC
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC7_SEC_MODE");
 
         // Set second to 59
-        driver.pulse_down(3, 4); // 0 -> 59
+        driver.pulse_down(); // 0 -> 59
         scoreboard.check_time(0, 0, 59, "TC7_SEC_SET_59");
 
         // Pulse Up: 59 -> 0. Check that Minute DOES NOT increment (remains 0)
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 0, "TC7_SEC_WRAPPED_MIN_ISOLATED");
 
         // Switch to ADJ_MIN mode
-        driver.pulse_sel(3, 4); // SEC -> MIN
+        driver.pulse_sel(); // SEC -> MIN
         scoreboard.check_mode(MODE_ADJ_MIN, "TC7_MIN_MODE");
 
         // Set minute to 59
-        driver.pulse_down(3, 4); // 0 -> 59
+        driver.pulse_down(); // 0 -> 59
         scoreboard.check_time(0, 59, 0, "TC7_MIN_SET_59");
 
         // Pulse Up: 59 -> 0. Check that Hour DOES NOT increment (remains 0)
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 0, "TC7_MIN_WRAPPED_HOUR_ISOLATED");
     endtask
 
@@ -296,17 +305,17 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // Enter ADJ_MIN mode: RUN -> SEC -> MIN
-        driver.pulse_sel(3, 4);
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_MIN, "TC8_MIN_MODE");
 
         // In ADJ_MIN mode, set minute to 15
-        repeat (15) driver.pulse_up(3, 4);
+        repeat (15) driver.pulse_up();
         scoreboard.check_time(0, 15, 0, "TC8_MIN_AT_15");
 
         // Assert both UP and DOWN at the exact same clock cycles
         log_info("Pressing UP and DOWN simultaneously...");
-        driver.pulse_up_down_simultaneous(3, 4);
+        driver.pulse_up_down_simultaneous();
         
         // Value must hold strictly at 15
         scoreboard.check_time(0, 15, 0, "TC8_HOLD_ON_SIMULTANEOUS_PRESS");
@@ -335,40 +344,40 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // 1. Navigate to ADJ_HOUR mode: RUN -> SEC -> MIN -> HOUR
-        driver.pulse_sel(3, 4); // RUN -> SEC
-        driver.pulse_sel(3, 4); // SEC -> MIN
-        driver.pulse_sel(3, 4); // MIN -> HOUR
+        driver.pulse_sel(); // RUN -> SEC
+        driver.pulse_sel(); // SEC -> MIN
+        driver.pulse_sel(); // MIN -> HOUR
         scoreboard.check_mode(MODE_ADJ_HOUR, "TC10_HOUR_MODE");
 
         // Set hour to 23: 0 -> 23 via wrap-down
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(23, 0, 0, "TC10_HOUR_SET_23");
 
         // 2. Navigate to ADJ_MIN mode: HOUR -> RUN -> SEC -> MIN
-        driver.pulse_sel(3, 4); // HOUR -> RUN
-        driver.pulse_sel(3, 4); // RUN -> SEC
-        driver.pulse_sel(3, 4); // SEC -> MIN
+        driver.pulse_sel(); // HOUR -> RUN
+        driver.pulse_sel(); // RUN -> SEC
+        driver.pulse_sel(); // SEC -> MIN
         scoreboard.check_mode(MODE_ADJ_MIN, "TC10_MIN_MODE");
 
         // Set minute to 59: 0 -> 59 via wrap-down
-        driver.pulse_down(3, 4);
+        driver.pulse_down();
         scoreboard.check_time(23, 59, 0, "TC10_MIN_SET_59");
 
         // 3. Navigate to ADJ_SEC mode: MIN -> HOUR -> RUN -> SEC
-        driver.pulse_sel(3, 4); // MIN -> HOUR
-        driver.pulse_sel(3, 4); // HOUR -> RUN
-        driver.pulse_sel(3, 4); // RUN -> SEC
+        driver.pulse_sel(); // MIN -> HOUR
+        driver.pulse_sel(); // HOUR -> RUN
+        driver.pulse_sel(); // RUN -> SEC
         scoreboard.check_mode(MODE_ADJ_SEC, "TC10_SEC_MODE");
 
         // Set second to 58: 0 -> 59 -> 58 via wrap-down
-        driver.pulse_down(3, 4); // 0 -> 59
-        driver.pulse_down(3, 4); // 59 -> 58
+        driver.pulse_down(); // 0 -> 59
+        driver.pulse_down(); // 59 -> 58
         scoreboard.check_time(23, 59, 58, "TC10_TIME_SET_23_59_58");
 
         // 4. Switch to MODE_RUN for real-time natural counting: SEC -> MIN -> HOUR -> RUN
-        driver.pulse_sel(3, 4); // SEC -> MIN
-        driver.pulse_sel(3, 4); // MIN -> HOUR
-        driver.pulse_sel(3, 4); // HOUR -> RUN
+        driver.pulse_sel(); // SEC -> MIN
+        driver.pulse_sel(); // MIN -> HOUR
+        driver.pulse_sel(); // HOUR -> RUN
         scoreboard.check_mode(MODE_RUN, "TC10_ENTER_RUN_MODE");
 
         // Wait 1 second tick: 23:59:58 -> 23:59:59
@@ -393,68 +402,87 @@ module tb_hms_timer;
         
         // 1. In MODE_RUN, test UP, DOWN, and UP+DOWN presses (all should be ignored)
         scoreboard.check_mode(MODE_RUN, "TC11_RUN_MODE");
-        driver.pulse_up(3, 4);
-        driver.pulse_down(3, 4);
-        driver.pulse_up_down_simultaneous(3, 4);
-        scoreboard.check_time(0, 0, 0, "TC11_RUN_IMMUNITY");
+        driver.pulse_up();
+        driver.pulse_down();
+        driver.pulse_up_down_simultaneous();
+        scoreboard.check_mode(MODE_RUN, "TC11_RUN_IMMUNITY_MODE");
 
         // 2. In MODE_ADJ_SEC, test UP+DOWN simultaneous
-        driver.pulse_sel(3, 4);
+        driver.reset_dut(10);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC11_SEC_MODE");
-        driver.pulse_up_down_simultaneous(3, 4);
+        driver.pulse_up_down_simultaneous();
         scoreboard.check_time(0, 0, 0, "TC11_SEC_SIMULTANEOUS");
 
         // 3. In MODE_ADJ_HOUR, test UP+DOWN simultaneous
-        driver.pulse_sel(3, 4); // SEC -> MIN
-        driver.pulse_sel(3, 4); // MIN -> HOUR
+        driver.pulse_sel(); // SEC -> MIN
+        driver.pulse_sel(); // MIN -> HOUR
         scoreboard.check_mode(MODE_ADJ_HOUR, "TC11_HOUR_MODE");
-        driver.pulse_up_down_simultaneous(3, 4);
+        driver.pulse_up_down_simultaneous();
         scoreboard.check_time(0, 0, 0, "TC11_HOUR_SIMULTANEOUS");
 
         // Return to RUN mode
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_RUN, "TC11_RETURN_RUN");
     endtask
 
-    // TC12: Button Debouncer 20ms Hold Threshold & Auto-Repeat Verification
+    // TC12: Button Debouncer 20ms Hold (10-Percent Tolerance) & Auto-Repeat Verification
     task run_tc12_button_debouncer_and_autorepeat();
         $display("\n--------------------------------------------------------------------------------");
-        $display(">>> TEST CASE 12: Button Debounce 20ms Hold & Auto-Repeat Verification <<<");
+        $display(">>> TEST CASE 12: Button Debounce 20ms Hold (10-Percent Tolerance) & Auto-Repeat <<<");
         $display("--------------------------------------------------------------------------------");
         driver.reset_dut(10);
 
         // Enter ADJ_SEC mode
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC12_ENTER_SEC_MODE");
 
-        // 1. Hold UP button for 1 clock cycle (less than 2 debounce cycles) -> Should be ignored
-        log_info("Testing button hold shorter than debounce threshold (1 cycle)...");
+        // 1. Hold UP button for 17 cycles (< 18 ticks lower tolerance threshold) -> Strictly ignored (Noise rejection)
+        log_info("Testing button hold below 10-percent tolerance threshold (17 cycles < 18 cycles)...");
         @(posedge vif.clk);
         vif.up_in <= 1'b1;
-        @(posedge vif.clk);
+        repeat (17) @(posedge vif.clk);
         vif.up_in <= 1'b0;
         driver.wait_cycles(5);
-        scoreboard.check_time(0, 0, 0, "TC12_IGNORE_SHORT_PRESS");
+        scoreboard.check_time(0, 0, 0, "TC12_REJECT_SHORT_PRESS_BELOW_TOLERANCE");
 
-        // 2. Hold UP button for 3 cycles (>= 2 debounce cycles) -> Should generate exactly 1 pulse
-        log_info("Testing button hold exceeding debounce threshold (3 cycles -> 1 pulse)...");
-        driver.pulse_up(3, 5);
-        scoreboard.check_time(0, 0, 1, "TC12_SINGLE_DEBOUNCED_PULSE");
-
-        // 3. Hold UP button for 6 cycles (at 2 cycles/pulse -> generates 3 pulses due to auto-repeat)
-        log_info("Testing button held long for Auto-Repeat (6 cycles -> 3 pulses)...");
+        // 2. Hold UP button for 18 cycles (= 20 - 10-percent lower tolerance boundary) -> Accepted, 1 pulse
+        log_info("Testing button hold at lower tolerance boundary (18 cycles = 20 minus 10-percent)...");
         @(posedge vif.clk);
         vif.up_in <= 1'b1;
-        repeat (6) @(posedge vif.clk);
+        repeat (18) @(posedge vif.clk);
         vif.up_in <= 1'b0;
         driver.wait_cycles(5);
-        // Previous value was 1, plus 3 pulses = 4
-        scoreboard.check_time(0, 0, 4, "TC12_AUTO_REPEAT_INCREMENT");
+        scoreboard.check_time(0, 0, 1, "TC12_ACCEPT_LOWER_TOLERANCE_BOUNDARY");
+
+        // 3. Hold UP button for 20 cycles (nominal debounce time) -> Accepted, 1 pulse
+        log_info("Testing button hold at nominal debounce time (20 cycles)...");
+        driver.pulse_up(20, 5);
+        scoreboard.check_time(0, 0, 2, "TC12_ACCEPT_NOMINAL_DEBOUNCE");
+
+        // 4. Hold UP button for 22 cycles (upper tolerance boundary = 20 + 10-percent) -> Accepted, 1 pulse (< 36 cycles)
+        log_info("Testing button hold at upper tolerance boundary (22 cycles = 20 plus 10-percent)...");
+        @(posedge vif.clk);
+        vif.up_in <= 1'b1;
+        repeat (22) @(posedge vif.clk);
+        vif.up_in <= 1'b0;
+        driver.wait_cycles(5);
+        scoreboard.check_time(0, 0, 3, "TC12_ACCEPT_UPPER_TOLERANCE_BOUNDARY");
+
+        // 5. Hold UP button for 54 cycles (3 * 18 cycles) -> Auto-repeat generates 3 pulses!
+        log_info("Testing button held continuously for Auto-Repeat (54 cycles = 3 x 18 cycles -> 3 pulses)...");
+        @(posedge vif.clk);
+        vif.up_in <= 1'b1;
+        repeat (54) @(posedge vif.clk);
+        vif.up_in <= 1'b0;
+        driver.wait_cycles(5);
+        // Previous value was 3, plus 3 auto-repeat pulses = 6
+        scoreboard.check_time(0, 0, 6, "TC12_AUTO_REPEAT_INCREMENT");
 
         // Return to RUN mode
-        driver.pulse_sel(3, 4); // SEC -> MIN
-        driver.pulse_sel(3, 4); // MIN -> HOUR
-        driver.pulse_sel(3, 4); // HOUR -> RUN
+        driver.pulse_sel(); // SEC -> MIN
+        driver.pulse_sel(); // MIN -> HOUR
+        driver.pulse_sel(); // HOUR -> RUN
         scoreboard.check_mode(MODE_RUN, "TC12_RETURN_RUN");
     endtask
 
@@ -470,24 +498,24 @@ module tb_hms_timer;
         scoreboard.check_mode(MODE_RUN, "TC13_INIT_MODE");
 
         // Step 1: Enter ADJ_SEC mode (Snapshot captures 00:00:00)
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC13_ENTER_ADJ_SEC");
 
         // Step 2: Modify seconds to 25
         log_info("Modifying seconds to 25...");
-        repeat (25) driver.pulse_up(3, 4);
+        repeat (25) driver.pulse_up();
         scoreboard.check_time(0, 0, 25, "TC13_SEC_MODIFIED_TO_25");
 
         // Step 3: Switch to ADJ_MIN mode and modify minutes to 40
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_MIN, "TC13_ENTER_ADJ_MIN");
-        repeat (40) driver.pulse_up(3, 4);
+        repeat (40) driver.pulse_up();
         scoreboard.check_time(0, 40, 25, "TC13_MIN_MODIFIED_TO_40");
 
         // Step 4: Switch to ADJ_HOUR mode and modify hours to 12
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_HOUR, "TC13_ENTER_ADJ_HOUR");
-        repeat (12) driver.pulse_up(3, 4);
+        repeat (12) driver.pulse_up();
         scoreboard.check_time(12, 40, 25, "TC13_HOUR_MODIFIED_TO_12");
 
         // Step 5: Do NOT commit via SEL. Instead, stay idle for 5 seconds (5 sec_ticks)
@@ -497,9 +525,9 @@ module tb_hms_timer;
         end
         repeat (3) @(posedge vif.clk); #1ns;
 
-        // Step 6: Verify FSM automatically returns to MODE_RUN and rolls back to 00:00:00
+        // Step 6: Verify FSM automatically returns to MODE_RUN and switches display back to background counter (25 seconds elapsed)
         scoreboard.check_mode(MODE_RUN, "TC13_AUTO_RETURNED_TO_RUN");
-        scoreboard.check_time(0, 0, 0, "TC13_ROLLBACK_TO_SNAPSHOT_SUCCESS");
+        scoreboard.check_time(0, 0, 25, "TC13_RESUME_BACKGROUND_TIME_ZERO_DRIFT");
     endtask
 
     // TC14: 5s Inactivity Timeout Keep-Alive Activity Reset
@@ -510,11 +538,11 @@ module tb_hms_timer;
         driver.reset_dut(10);
         
         // Enter ADJ_SEC mode
-        driver.pulse_sel(3, 4);
+        driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC14_ENTER_ADJ_SEC");
 
         // Modify seconds to 10
-        repeat (10) driver.pulse_up(3, 4);
+        repeat (10) driver.pulse_up();
         scoreboard.check_time(0, 0, 10, "TC14_SEC_SET_10");
 
         // Wait 3 seconds (< 5 seconds timeout)
@@ -524,7 +552,7 @@ module tb_hms_timer;
 
         // Press UP button to reset inactivity timer (Keep-Alive)
         log_info("Pressing UP button to reset inactivity timer...");
-        driver.pulse_up(3, 4);
+        driver.pulse_up();
         scoreboard.check_time(0, 0, 11, "TC14_SEC_SET_11");
 
         // Wait another 3 seconds (< 5s since last press)
@@ -533,9 +561,9 @@ module tb_hms_timer;
         scoreboard.check_mode(MODE_ADJ_SEC, "TC14_STILL_ALIVE_AFTER_KEEP_ALIVE");
 
         // Now explicitly commit by cycling through to MODE_RUN
-        driver.pulse_sel(3, 4); // SEC -> MIN
-        driver.pulse_sel(3, 4); // MIN -> HOUR
-        driver.pulse_sel(3, 4); // HOUR -> RUN
+        driver.pulse_sel(); // SEC -> MIN
+        driver.pulse_sel(); // MIN -> HOUR
+        driver.pulse_sel(); // HOUR -> RUN
         scoreboard.check_mode(MODE_RUN, "TC14_EXPLICIT_COMMIT_RUN");
 
         // Value must be retained at 00:00:11

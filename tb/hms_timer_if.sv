@@ -29,12 +29,17 @@ interface hms_timer_if #(
     logic [SEC_WIDTH-1:0]  s_out;
 
     // Internal probe signals for deep-cycle verification
+    logic                  tick_1khz;
+    logic                  gated_clk_1khz;
+    logic                  gated_clk_sec;
+    logic                  gated_clk_min;
+    logic                  gated_clk_hour;
     logic                  sel_pulse;
     logic                  up_pulse;
     logic                  down_pulse;
     logic                  sec_tick;
     logic [1:0]            adj_mode;
-    logic                  cancel_pulse;
+    logic                  load_en;
     logic                  sec_rollover;
     logic                  min_rollover;
 
@@ -70,6 +75,7 @@ interface hms_timer_if #(
         input down_pulse;
         input sec_tick;
         input adj_mode;
+        input load_en;
         input sec_rollover;
         input min_rollover;
     endclocking
@@ -118,19 +124,19 @@ interface hms_timer_if #(
     assert_reset_state: assert property (p_reset_state)
         else $error("[SVA FAIL] Outputs not zero during reset: H=%0d M=%0d S=%0d", h_out, m_out, s_out);
 
-    // A5: Rollover Gating Check in Adjust Modes
-    property p_sec_rollover_gated;
+    // A5: Rollover Synchronization Check
+    property p_sec_rollover_sync;
         @(posedge clk) disable iff (!rstn)
-        (adj_mode != 2'b00) |-> (!sec_rollover);
+        sec_rollover |-> sec_tick;
     endproperty
-    assert_sec_rollover_gated: assert property (p_sec_rollover_gated)
-        else $error("[SVA FAIL] sec_rollover active during Adjust Mode!");
+    assert_sec_rollover_sync: assert property (p_sec_rollover_sync)
+        else $error("[SVA FAIL] sec_rollover active without sec_tick!");
 
-    property p_min_rollover_gated;
+    property p_min_rollover_sync;
         @(posedge clk) disable iff (!rstn)
-        (adj_mode != 2'b00) |-> (!min_rollover);
+        min_rollover |-> sec_rollover;
     endproperty
-    assert_min_rollover_gated: assert property (p_min_rollover_gated)
-        else $error("[SVA FAIL] min_rollover active during Adjust Mode!");
+    assert_min_rollover_sync: assert property (p_min_rollover_sync)
+        else $error("[SVA FAIL] min_rollover active without sec_rollover!");
 
 endinterface

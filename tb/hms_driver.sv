@@ -42,7 +42,7 @@ class hms_driver;
     endtask
 
     // Press Select Button (generates rising edge, holds for pulse_width cycles, then drops)
-    task pulse_sel(int pulse_width = 3, int post_delay = 5);
+    task pulse_sel(int pulse_width = 20, int post_delay = 5);
         @(posedge vif.clk);
         vif.sel_in <= 1'b1;
         repeat (pulse_width) @(posedge vif.clk);
@@ -51,7 +51,7 @@ class hms_driver;
     endtask
 
     // Press Up Button
-    task pulse_up(int pulse_width = 3, int post_delay = 5);
+    task pulse_up(int pulse_width = 20, int post_delay = 5);
         @(posedge vif.clk);
         vif.up_in <= 1'b1;
         repeat (pulse_width) @(posedge vif.clk);
@@ -60,7 +60,7 @@ class hms_driver;
     endtask
 
     // Press Down Button
-    task pulse_down(int pulse_width = 3, int post_delay = 5);
+    task pulse_down(int pulse_width = 20, int post_delay = 5);
         @(posedge vif.clk);
         vif.down_in <= 1'b1;
         repeat (pulse_width) @(posedge vif.clk);
@@ -69,7 +69,7 @@ class hms_driver;
     endtask
 
     // Simultaneous Up and Down Press (Conflict test)
-    task pulse_up_down_simultaneous(int pulse_width = 3, int post_delay = 5);
+    task pulse_up_down_simultaneous(int pulse_width = 20, int post_delay = 5);
         @(posedge vif.clk);
         vif.up_in   <= 1'b1;
         vif.down_in <= 1'b1;
@@ -91,7 +91,7 @@ class hms_driver;
     // Navigate FSM to a specific target mode
     task set_mode(hms_mode_e target_mode);
         while (vif.adj_mode !== target_mode) begin
-            pulse_sel(3, 4);
+            pulse_sel(20, 5);
         end
     endtask
 

@@ -1,0 +1,12 @@
+{
+  "signal": [
+    {"name": "clk_in", "wave": "p..................."},
+    {"name": "en (active-high)", "wave": "0...1.......0......."},
+    {"name": "latch_q (internal)", "wave": "0....1.......0......"},
+    {"name": "clk_gated", "wave": "0....h.l.h...0......"}
+  ],
+  "head": {
+    "text": "icg_cell Timing: Glitch-Free Clock Gating via Active-Low Latch and AND Gate",
+    "tick": 0
+  }
+}

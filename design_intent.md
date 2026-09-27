@@ -1,35 +1,52 @@
-# Design Intent & Architectural Decisions (v1.1.0)
+# Design Intent & Architectural Decisions (v2.3.0 Output Switch & Zero-Drift Clock)
 
 ## 1. Objective & Scope
-The `HMS_Timer` IP Core is designed to provide an accurate, robust, and synthesizable digital time-keeping solution for ASIC/FPGA designs operating on a synchronous 1 MHz clock domain.
+The `HMS_Timer` IP Core is designed to provide an accurate, robust, power/area-optimized, and synthesizable digital time-keeping solution for ASIC/FPGA designs operating on a synchronous 1 MHz clock domain with Integrated Clock Gating (ICG).
 
 ---
 
 ## 2. Key Architectural Decisions (Why vs What)
 
-### 2.1 Single Clock Domain vs Ripple Clock
-- **Decision:** All registers are clocked by the global `clk` signal. No sub-module generates a ripple clock for another module.
-- **Rationale:** Ripple clocks cause clock skew, glitches, race conditions, and violate synchronous design rules in modern synthesis and STA (Static Timing Analysis).
-- **Implementation:** Counters communicate via 1-cycle synchronous enable pulses (`sec_rollover`, `min_rollover`).
+### 2.1 Integrated Clock Gating (ICG) on Low-Frequency Counters
+- **Problem:** When feeding a 1 MHz clock continuously to 1 Hz, 1/60 Hz, and 1/3600 Hz counters, the internal clock pin inverters of all Flip-Flops toggle at 1 MHz, wasting significant dynamic power ($P_{clk\_pin} = C_{clk} V_{DD}^2 f_{clk}$).
+- **Decision:** Instantiate glitch-free Integrated Clock Gating (ICG) cells (`icg_cell.sv`) for each sub-module:
+  - `gated_clk_1khz` for Prescaler Stage 2 and Debouncers (1,000 toggles/s).
+  - `gated_clk_sec` for Second Counter (1 toggle/s in RUN mode / load).
+  - `gated_clk_min` for Minute Counter (1 toggle/60s in RUN mode / load).
+  - `gated_clk_hour` for Hour Counter (1 toggle/3600s in RUN mode / load).
+  - `gated_clk_fsm` for Mode Controller.
+- **Glitch Immunity & STA Synchronicity:** Each ICG cell utilizes an active-low transparent latch to hold the enable signal stable during the positive half of the clock cycle, preventing any runt pulses/glitches. Gated clocks are derived directly from the root 1 MHz clock, maintaining a 100% single synchronous clock domain with zero CDC risk.
+- **DFT / Scan Testability:** Each ICG cell includes a `test_mode` port that forces the gate open during ATPG scan tests, guaranteeing 100% test coverage.
 
-### 2.2 2-Stage Synchronizer + 20ms Debounce Counter & Auto-Repeat
-- **Decision:** Asynchronous push buttons (`sel_in`, `up_in`, `down_in`) pass through a 2-FF synchronizer followed by a 20ms continuous-hold counter.
-- **Rationale:** Mechanical push buttons bounce for 5–20 ms, and noise glitches can cause false triggers. Requiring a stable 20ms active level filters 100% of contact bounce and noise.
-- **Auto-repeat Behavior:** Once a button is held for 20ms, a 1-clock-cycle pulse is emitted, and the 20ms counter immediately resets to 0. If the user continues holding the button, pulses are generated periodically every 20ms, allowing rapid adjustments. If released early (< 20ms), the counter clears to 0 immediately.
+### 2.2 Multi-Stage Cascaded Prescaler & Frequency Matching (PPA Optimization)
+- **Decision:** 2-stage cascaded frequency divider (`clk_prescaler`):
+  - Stage 1: Modulo-1000 (10-bit) dividing 1 MHz to 1 kHz (`tick_1khz`).
+  - Stage 2: Modulo-1000 (10-bit) dividing 1 kHz to 1 Hz (`sec_tick`).
+  - Debouncers: Sample at 1 kHz (`gated_clk_1khz`) using 5-bit counters (0..17) instead of 15-bit counters at 1 MHz.
+- **Rationale:** Reduces 1 MHz toggling counter bits from 65 bits down to 10 bits (84.6% reduction). Debouncer logic and Stage 2 prescaler only switch at 1 kHz (99.9% lower switching activity).
 
-### 2.3 Rollover Gating in Adjustment Modes
-- **Decision:** In `MODE_ADJ_SEC` and `MODE_ADJ_MIN`, `sec_rollover` and `min_rollover` are strictly gated to `0`.
-- **Rationale:** When a user adjusts the seconds from 59 to 00, they intend to reset the second field, not to increment the minute field. Gating the rollover pulse completely isolates each time field during user configuration.
+### 2.3 2-Stage Synchronizer + 1kHz-Sampled 20ms Debounce with ±10% Tolerance & Auto-Repeat
+- **Decision:** Asynchronous push buttons (`sel_in`, `up_in`, `down_in`) pass through a 2-FF synchronizer followed by a 1kHz-sampled 20ms continuous-hold counter with $\pm 10\%$ tolerance band ($18\text{ ms} \dots 22\text{ ms}$).
+- **Rationale:** Mechanical push buttons bounce for 5–20 ms, and noise glitches can cause false triggers. Requiring a stable 18ms active level filters 100% of contact bounce and noise while allowing reasonable clock/button tolerance.
+- **Auto-repeat Behavior:** Once a button is held for 18ms, a 1-clock-cycle pulse is emitted, and the counter immediately resets to 0. If the user continues holding the button, pulses are generated periodically every 18ms, allowing rapid adjustments. If released early (< 18ms), the counter clears to 0 immediately.
 
-### 2.4 Simultaneous Up & Down Conflict Resolution
-- **Decision:** When both `up_pulse` and `down_pulse` are active simultaneously, the counters hold their current value.
+### 2.4 Decoupled Time Edit Buffer & Dedicated Output Switch (`output_switch`)
+- **Problem:** If top-level outputs directly tap background counters, adjusting the time either requires halting the real-time clock (causing drift) or mutating live counters directly without immediate visual isolation.
+- **Decision:**
+  - Create a dedicated combinational multiplexer module `output_switch.sv`.
+  - Maintain an independent scratchpad edit buffer (`adj_sec`, `adj_min`, `adj_hour`) inside `mode_controller.sv`.
+  - In `MODE_ADJ_*`, `output_switch` routes `adj_sec, adj_min, adj_hour` to top outputs for responsive visual feedback.
+  - In `MODE_RUN`, `output_switch` routes background real-time counters `s_cnt, m_cnt, h_cnt` to top outputs.
+  - **Commit on Loop Exit:** When the user completes adjustment (`ADJ_HOUR` $\rightarrow$ `MODE_RUN` via `sel_in`), `mode_controller` asserts `load_en = 1` for 1 cycle to synchronously parallel load the edit buffer into all counters simultaneously.
+
+### 2.5 Continuous Background Real-Time Counters (Zero-Drift Clock)
+- **Decision:** Background counters (`second_counter`, `minute_counter`, `hour_counter`) run continuously in real-time at 1 Hz, 1/60 Hz, 1/3600 Hz regardless of whether the user is browsing adjustment menus.
+- **Area & Power Optimization:** Removing the old shadow snapshot registers (`r_*_bak`) saves 17 Flip-Flops and multiplexers across all 3 counter modules.
+
+### 2.6 Simultaneous Up & Down Conflict Resolution
+- **Decision:** When both `up_pulse` and `down_pulse` are active simultaneously, the edit buffer in `mode_controller` holds its current value.
 - **Rationale:** Prevents nondeterministic behavior and race conditions when multiple buttons are pressed or noisy inputs arrive together.
 
-### 2.5 Inactivity Timeout (5s) & Automatic Rollback (Cancel Changes)
-- **Decision:** If the user stays in any adjustment mode (`ADJ_SEC`, `ADJ_MIN`, `ADJ_HOUR`) for 5 consecutive seconds without any button activity, the system automatically cancels all uncommitted modifications, reverts to the snapshot taken upon entering adjustment mode, and returns to `MODE_RUN`.
-- **Rationale:** Prevents the device from being stuck in configuration mode indefinitely, and prevents accidental/unintended partial adjustments from corrupting the real-time clock.
-- **Implementation:** 
-  - When transitioning from `MODE_RUN` to `MODE_ADJ_SEC` upon a `sel_pulse`, each counter (`second_counter`, `minute_counter`, `hour_counter`) captures its current value into a shadow backup register (`_bak`).
-  - `mode_controller` tracks inactivity using `sec_tick`. Any button press resets the 5-second timer.
-  - If 5 seconds elapse without button presses, `mode_controller` pulses `cancel_pulse` for 1 clock cycle and transitions to `MODE_RUN`. Each counter reloads its value from `_bak`.
-  - If the user explicitly cycles through to `MODE_RUN` via `sel_pulse`, the new values are committed.
+### 2.7 Inactivity Timeout (5s) & Automatic Rollback
+- **Decision:** If the user stays in any adjustment mode (`ADJ_SEC`, `ADJ_MIN`, `ADJ_HOUR`) for 5 consecutive seconds without any button activity, the system automatically exits to `MODE_RUN` with `load_en = 0`.
+- **Rationale:** Discards uncommitted buffer changes and seamlessly returns the display to the accurate background counter.
