@@ -13,9 +13,9 @@ HMS_Timer/
 ├── debug_checklist.md             # Pre-commit & sign-off checklist
 ├── docs/
 │   ├── SPECIFICATION.md           # Formal Top-down Architectural Specification (v2.3.0)
-│   ├── SPECIFICATION.docx         # Formatted Word Document with Architecture & Timing Diagrams
-│   └── build_spec_docx.py         # Automated DOCX generator script
+│   └── SPECIFICATION.docx         # Formatted Word Document with Architecture & Timing Diagrams
 ├── rtl/
+│   ├── reset_sync.sv              # 2-Stage Asynchronous Assert, Synchronous Deassert Reset Synchronizer
 │   ├── icg_cell.sv                # Glitch-Free Integrated Clock Gating (ICG) Cell
 │   ├── clock_control_unit.sv      # Centralized Clock Management & Glitch-Free ICG Unit
 │   ├── clk_prescaler.sv           # Multi-stage cascaded prescaler (1 MHz -> 1 kHz -> 1 Hz, PPA Optimized)
@@ -26,7 +26,7 @@ HMS_Timer/
 │   ├── minute_counter.sv          # Modulo-60 Minute Background Counter with Synchronous Load (1 toggle/60s)
 │   ├── hour_counter.sv            # Modulo-24 Hour Background Counter with Synchronous Load (1 toggle/3600s)
 │   ├── output_switch.sv           # Combinational Display Multiplexer (Run: Counter / Adj: Buffer)
-│   └── hms_timer.sv               # Top-Level IP Core Integration with Clock Control Unit & Output Switch
+│   └── hms_timer.sv               # Top-Level IP Core Integration with CCU, Reset Synchronizer & Output Switch
 └── tb/
     ├── hms_timer_types_pkg.sv     # Enums, structs, transaction classes, logging
     ├── hms_timer_if.sv            # SystemVerilog Interface with Clocking Blocks, ICG probes & SVA
@@ -41,6 +41,7 @@ HMS_Timer/
 ```mermaid
 graph TD
     SPEC["docs/SPECIFICATION.md"] --> TOP["rtl/hms_timer.sv"]
+    TOP --> RST["rtl/reset_sync.sv"]
     TOP --> ICG["rtl/icg_cell.sv"]
     TOP --> PSC["rtl/clk_prescaler.sv"]
     TOP --> DEB["rtl/button_debouncer.sv"]

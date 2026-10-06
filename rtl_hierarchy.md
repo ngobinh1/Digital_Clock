@@ -11,31 +11,35 @@
 | `DIV_1KHZ_MAX` | `(CLK_FREQ_HZ / 1000) - 1` | Prescaler stage 1 terminal count (999) |
 | `DIV_1HZ_MAX` | `(1000 / 1) - 1` | Prescaler stage 2 terminal count (999) |
 | `DEBOUNCE_TICKS` | `20` | Nominal debounce threshold in 1 kHz ticks (20 ticks = 20ms) |
-| `DEBOUNCE_TOL_PCT`| `10` | Debounce tolerance percentage ($\pm 10\% \rightarrow 18\text{ ms} \dots 22\text{ ms}$) |
+| `DEBOUNCE_TOL_PCT`| `10` | Debounce tolerance percentage (±10%, 18 ms .. 22 ms) |
 | `TIMEOUT_SEC` | `5` | Inactivity timeout threshold in seconds (Default 5s) |
-| `SEC_WIDTH` | `6` | Bit width of second counter ($0 \dots 59$) |
-| `MIN_WIDTH` | `6` | Bit width of minute counter ($0 \dots 59$) |
-| `HOUR_WIDTH` | `5` | Bit width of hour counter ($0 \dots 23$) |
+| `SEC_WIDTH` | `6` | Bit width of second counter (0 .. 59) |
+| `MIN_WIDTH` | `6` | Bit width of minute counter (0 .. 59) |
+| `HOUR_WIDTH` | `5` | Bit width of hour counter (0 .. 23) |
 
 ### 1.2 Top-Level I/O Ports
 | Port Name | Direction | Width | Type | Description |
 | :--- | :---: | :---: | :---: | :--- |
 | `clk` | Input | 1 | Clock | 1 MHz synchronous master clock |
-| `rstn` | Input | 1 | Reset | Asynchronous active-low reset |
-| `test_mode` | Input | 1 | DFT/Scan | DFT/Scan test mode bypass (forces ICGs transparent) |
+| `rstn` | Input | 1 | Reset | Asynchronous active-low raw reset |
+| `test_mode` | Input | 1 | DFT/Scan | DFT/Scan test mode bypass (forces ICGs transparent & bypasses reset synchronizer) |
 | `sel_in` | Input | 1 | Async Control | Mode select button input (20ms ±10% debounce) |
 | `up_in` | Input | 1 | Async Control | Increment button input (20ms ±10% debounce) |
 | `down_in` | Input | 1 | Async Control | Decrement button input (20ms ±10% debounce) |
-| `h_out` | Output | 5 | Data Out | Display hours ($0 \dots 23$) |
-| `m_out` | Output | 6 | Data Out | Display minutes ($0 \dots 59$) |
-| `s_out` | Output | 6 | Data Out | Display seconds ($0 \dots 59$) |
+| `h_out` | Output | 5 | Data Out | Display hours (0 .. 23) |
+| `m_out` | Output | 6 | Data Out | Display minutes (0 .. 59) |
+| `s_out` | Output | 6 | Data Out | Display seconds (0 .. 59) |
 
 ---
 
 ## 2. Sub-module Hierarchy Tree
 
 ```text
-hms_timer (Top - v2.3.0 Output Switch & Zero-Drift Clock)
+hms_timer (Top - v2.3.0 Output Switch, Reset Synchronizer & Zero-Drift Clock)
+├── u_reset_sync           [reset_sync.sv - 2-Stage Asynchronous Assert, Synchronous Deassert Reset Synchronizer]
+│   ├── r_sync_stage1       (Stage 1 Synchronizer FF, async_reg = "true")
+│   ├── r_sync_stage2       (Stage 2 Synchronizer FF, async_reg = "true")
+│   └── Scan Mux            (test_mode bypass)
 ├── u_clock_control_unit   [clock_control_unit.sv - Centralized Clock Management & Glitch-Free ICG Unit]
 │   ├── u_icg_1khz          (icg_cell for 1kHz Domain)
 │   ├── u_icg_sec           (icg_cell for Second Counter: 1 toggle/s / Load)
@@ -75,6 +79,7 @@ hms_timer (Top - v2.3.0 Output Switch & Zero-Drift Clock)
 
 | Internal Signal | Width | Driver Module | Receiver Module(s) | Function |
 | :--- | :---: | :--- | :--- | :--- |
+| `rstn_sync` | 1 | `u_reset_sync` | Toàn bộ các sub-module tuần tự | Synchronized active-low reset to eliminate recovery/removal violations |
 | `gated_clk_1khz` | 1 | `u_clock_control_unit` | `u_button_controller` | Gated clock for 1 kHz domain |
 | `gated_clk_sec` | 1 | `u_clock_control_unit` | `u_second_counter` | Gated clock for second counter (1 toggle/s in RUN / load) |
 | `gated_clk_min` | 1 | `u_clock_control_unit` | `u_minute_counter` | Gated clock for minute counter (1 toggle/60s in RUN / load) |
@@ -93,5 +98,5 @@ hms_timer (Top - v2.3.0 Output Switch & Zero-Drift Clock)
 | `s_cnt[5:0]` | 6 | `u_second_counter` | `u_output_switch`, `u_mode_controller` | Real-time second from background counter |
 | `m_cnt[5:0]` | 6 | `u_minute_counter` | `u_output_switch`, `u_mode_controller` | Real-time minute from background counter |
 | `h_cnt[4:0]` | 5 | `u_hour_counter` | `u_output_switch`, `u_mode_controller` | Real-time hour from background counter |
-| `sec_rollover` | 1 | `u_second_counter` | `u_minute_counter`, `u_clock_control_unit` | 1-cycle rollover pulse when $s\_cnt == 59 \land sec\_tick$ |
-| `min_rollover` | 1 | `u_minute_counter` | `u_hour_counter`, `u_clock_control_unit` | 1-cycle rollover pulse when $m\_cnt == 59 \land sec\_rollover$ |
+| `sec_rollover` | 1 | `u_second_counter` | `u_minute_counter`, `u_clock_control_unit` | 1-cycle rollover pulse when `s_cnt == 59 & sec_tick & ~load_en` |
+| `min_rollover` | 1 | `u_minute_counter` | `u_hour_counter`, `u_clock_control_unit` | 1-cycle rollover pulse when `m_cnt == 59 & sec_rollover & ~load_en` |

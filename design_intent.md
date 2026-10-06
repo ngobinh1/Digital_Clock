@@ -50,3 +50,11 @@ The `HMS_Timer` IP Core is designed to provide an accurate, robust, power/area-o
 ### 2.7 Inactivity Timeout (5s) & Automatic Rollback
 - **Decision:** If the user stays in any adjustment mode (`ADJ_SEC`, `ADJ_MIN`, `ADJ_HOUR`) for 5 consecutive seconds without any button activity, the system automatically exits to `MODE_RUN` with `load_en = 0`.
 - **Rationale:** Discards uncommitted buffer changes and seamlessly returns the display to the accurate background counter.
+
+### 2.8 Reset Synchronization & Metastability Prevention (`reset_sync`)
+- **Problem:** When an asynchronous external reset signal (`rstn`) is deasserted asynchronously, its rising edge can violate the recovery or removal time of flip-flops in downstream modules (`clk_prescaler`, `button_controller`, `mode_controller`, counters), causing metastability and unpredictable system startup states.
+- **Decision:** Implement a dedicated 2-stage Flip-Flop Reset Synchronizer (`reset_sync.sv`):
+  - **Asynchronous Assert:** Drops `rstn_sync = 0` immediately when `rstn = 0` without waiting for clock edges, guaranteeing immediate reset.
+  - **Synchronous Deassert:** Propagates `rstn_sync = 1` synchronously on the 2nd rising edge of `clk` (2 µs delay), ensuring all downstream flip-flops release from reset simultaneously and cleanly with zero recovery/removal violations.
+  - **Synthesis Attributes:** Applies `(* async_reg = "true" *)` to keep synchronizer flip-flops in close physical proximity and prevent unwanted shift-register optimization.
+  - **DFT Scan Bypass:** Integrates a static `test_mode` multiplexer to bypass the synchronizer during ATPG scan testing for full fault controllability.

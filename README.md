@@ -10,19 +10,23 @@
 
 IP Core bộ đếm thời gian thực **Giờ - Phút - Giây (Hour-Minute-Second Timer)** chuẩn công nghiệp bán dẫn, thiết kế hoàn toàn bằng ngôn ngữ phần cứng **SystemVerilog Synthesizable** và được kiểm chứng toàn diện với môi trường **SystemVerilog Verification Environment** (Interface, Clocking Blocks, Driver, Golden Model Scoreboard, Functional Coverage, SystemVerilog Assertions).
 
-Phiên bản **v2.3.0** nâng cấp **Kiến trúc Tách biệt Bộ Đệm Chỉnh Giờ & Chuyển Mạch Hiển Thị (`output_switch`)** kết hợp **Bộ đếm Nền Zero-Drift Real-Time Counters**:
+Phiên bản **v2.3.0** nâng cấp **Kiến trúc Tách biệt Bộ Đệm Chỉnh Giờ & Chuyển Mạch Hiển Thị (`output_switch`)** kết hợp **Bộ đếm Nền Zero-Drift Real-Time Counters** và **Bộ Đồng Bộ Hóa Reset (`reset_sync`)**:
+- **Bộ Đồng Bộ Hóa Giải Trừ Reset (`reset_sync` - Asynchronous Assert, Synchronous Deassert 2-FF)**:
+  * Xác lập mức thấp ngay tức thì khi `rstn = 0` (zero clock delay), đảm bảo reset hệ thống kịp thời và tin cậy.
+  * Giải trừ mức cao đồng bộ theo sườn dương `clk` sau 2 chu kỳ clock (2 µs), triệt tiêu hoàn toàn vi phạm Recovery/Removal Time và chống hiện tượng bất ổn định (Metastability) toàn chip.
+  * Tích hợp cổng multiplexer bypass `test_mode` cho kiểm thử Scan ATPG.
 - **Khối Chuyển Mạch Hiển Thị Chuyên Dụng (`output_switch`)**:
   * Khi ở chế độ chỉnh sửa (`MODE_ADJ_*`), các ngõ ra hiển thị trực tiếp giá trị từ bộ đệm chỉnh sửa (`mode_controller`) giúp người dùng theo dõi trực quan và tức thời.
   * Khi ở chế độ đếm thời gian thực (`MODE_RUN`), các ngõ ra hiển thị giá trị từ các bộ đếm nền thời gian thực.
 - **Bộ Đếm Nền Liên Tục Chuẩn Xác (Zero-Drift Background Clock)**:
-  * Các khối `second_counter`, `minute_counter`, `hour_counter` đếm thời gian thực liên tục $24/7$ ở chế độ nền. Không bị dừng hay trôi thời gian khi người dùng đang thao tác trong menu.
+  * Các khối `second_counter`, `minute_counter`, `hour_counter` đếm thời gian thực liên tục 24/7 ở chế độ nền. Không bị dừng hay trôi thời gian khi người dùng đang thao tác trong menu.
   * Loại bỏ hoàn toàn các thanh ghi bóng (shadow snapshot registers), tiết kiệm 17 Flip-Flops và cổng logic.
 - **Nạp Song Song Đồng Bộ Khi Xác Nhận (Commit on Loop Exit)**:
-  * Khi người dùng duyệt hết chu trình chỉnh giờ (`ADJ_HOUR` $\rightarrow$ `MODE_RUN`), `mode_controller` phát xung 1-cycle `load_en = 1`, nạp song song toàn bộ thời gian đã chỉnh vào các bộ đếm.
+  * Khi người dùng duyệt hết chu trình chỉnh giờ (`ADJ_HOUR` -> `MODE_RUN`), `mode_controller` phát xung 1-cycle `load_en = 1`, nạp song song toàn bộ thời gian đã chỉnh vào các bộ đếm.
 - **Hủy Bỏ & Khôi Phục Hiển Thị Tự Động Sau 5s (5s Inactivity Timeout)**:
   * Nếu người dùng không thao tác phím trong 5s, FSM tự động quay về `MODE_RUN` với `load_en = 0` (hủy bỏ bộ đệm), bộ MUX tự động chuyển lại hiển thị bộ đếm nền đang chạy chuẩn xác.
 - **Khử rung nút bấm chuyên dụng 20ms với Dung sai ±10% (`1kHz-Sampled 20ms ±10% Debounce & Auto-Repeat`)**:
-  * Tần số lấy mẫu: $1\text{ kHz}$ ($1\text{ ms}$). Dải dung sai: $18\text{ ms} \dots 22\text{ ms}$.
+  * Tần số lấy mẫu: 1 kHz (1 ms). Dải dung sai: 18 ms .. 22 ms.
 - **Khóa Xung Nhịp Chống Glitch (`Glitch-Free Integrated Clock Gating - ICG`)**:
   * Chân CLK của `second_counter` chỉ dao động **1 lần/giây** (1 toggle/s).
   * Chân CLK của `minute_counter` chỉ dao động **1 lần/60 giây**.
@@ -39,18 +43,20 @@ HMS_Timer/
 ├── Makefile                   # Build script cho QuestaSim / VCS / Verilator
 ├── docs/                      # Tài liệu thiết kế đặc tả kiến trúc
 │   ├── SPECIFICATION.md       # Đặc tả thiết kế RTL chi tiết chuẩn Spec-First (v2.3.0)
-│   ├── SPECIFICATION.docx     # Tài liệu Word báo cáo kiến trúc và giản đồ
-│   └── build_spec_docx.py     # Script tạo tài liệu DOCX tự động
+│   └── SPECIFICATION.docx     # Tài liệu Word báo cáo kiến trúc và giản đồ
 ├── rtl/                       # Mã nguồn RTL Synthesizable (ICG + Decoupled PPA Optimized)
+│   ├── reset_sync.sv          # Khối đồng bộ hóa reset 2-FF (Async Assert, Sync Deassert) & DFT Bypass
 │   ├── icg_cell.sv            # Cổng Integrated Clock Gating chống Glitch (Latch-based)
+│   ├── clock_control_unit.sv  # Khối quản lý xung nhịp tập trung & 5 cổng ICG
 │   ├── clk_prescaler.sv       # Bộ chia tần đa tầng 1MHz -> 1kHz -> 1Hz
 │   ├── button_debouncer.sv    # Khối đồng bộ 2-FF & Khử rung 20ms ±10% Tol Clock 1kHz (5-bit)
+│   ├── button_controller.sv   # Quản lý 3 nút bấm & Căn xung 1 MHz đồng bộ
 │   ├── mode_controller.sv     # FSM điều khiển 4 chế độ, bộ đệm chỉnh giờ & Timeout 5s
 │   ├── second_counter.sv      # Bộ đếm Giây Modulo-60 nền & Synchronous Load (1 toggle/s)
 │   ├── minute_counter.sv      # Bộ đếm Phút Modulo-60 nền & Synchronous Load (1 toggle/60s)
 │   ├── hour_counter.sv        # Bộ đếm Giờ Modulo-24 nền & Synchronous Load (1 toggle/3600s)
 │   ├── output_switch.sv       # Bộ chuyển mạch đa hợp hiển thị tổ hợp (Display MUX)
-│   └── hms_timer.sv           # Top-level IP Core tích hợp 5 cổng ICG & Output Switch
+│   └── hms_timer.sv           # Top-level IP Core tích hợp CCU, Reset Sync & Output Switch
 ├── tb/                        # Môi trường kiểm chứng SystemVerilog
 │   ├── hms_timer_types_pkg.sv # Package định nghĩa kiểu dữ liệu, enum, loggers
 │   ├── hms_timer_if.sv        # Interface chứa Clocking blocks, ICG probes & SVA

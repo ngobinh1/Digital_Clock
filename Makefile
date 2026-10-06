@@ -21,7 +21,8 @@ RTL_DIR    = rtl
 TB_DIR     = tb
 
 # RTL Source Files
-RTL_SRCS   = $(RTL_DIR)/icg_cell.sv \
+RTL_SRCS   = $(RTL_DIR)/reset_sync.sv \
+             $(RTL_DIR)/icg_cell.sv \
              $(RTL_DIR)/clock_control_unit.sv \
              $(RTL_DIR)/clk_prescaler.sv \
              $(RTL_DIR)/button_debouncer.sv \
