@@ -22,8 +22,6 @@ TB_DIR     = tb
 
 # RTL Source Files
 RTL_SRCS   = $(RTL_DIR)/reset_sync.sv \
-             $(RTL_DIR)/icg_cell.sv \
-             $(RTL_DIR)/clock_control_unit.sv \
              $(RTL_DIR)/clk_prescaler.sv \
              $(RTL_DIR)/button_debouncer.sv \
              $(RTL_DIR)/button_controller.sv \
@@ -49,7 +47,7 @@ COV_FLAGS  = +cover=bcesf
 # Simulation flags
 VSIM_FLAGS = -c -work $(WORK_LIB) $(TB_TOP) -do "run -all; quit -f"
 
-.PHONY: all compile sim run wave cov clean help verilator_test
+.PHONY: all compile sim run wave cov clean help verilator_test synth flow clean-synth
 
 all: compile sim
 
@@ -58,12 +56,15 @@ help:
 	@echo "================================================================="
 	@echo "                     HMS_Timer Build System                      "
 	@echo "================================================================="
-	@echo "  make compile   : Compile RTL and SystemVerilog TB using QuestaSim"
-	@echo "  make sim       : Run batch simulation and display test scorecard"
-	@echo "  make all       : Compile and run simulation (default)"
-	@echo "  make wave      : Run simulation with waveform viewer (GUI mode)"
-	@echo "  make cov       : Compile with code/func coverage and gen report"
-	@echo "  make clean     : Clean up simulation work directory and logs"
+	@echo "  make compile     : Compile RTL and SystemVerilog TB using QuestaSim"
+	@echo "  make sim         : Run batch simulation and display test scorecard"
+	@echo "  make all         : Compile and run simulation (default)"
+	@echo "  make wave        : Run simulation with waveform viewer (GUI mode)"
+	@echo "  make cov         : Compile with code/func coverage and gen report"
+	@echo "  make synth       : Run OpenLane 2 Logic Synthesis (Yosys + Sky130)"
+	@echo "  make flow        : Run Full OpenLane 2 ASIC Flow (RTL -> GDSII)"
+	@echo "  make clean-synth : Clean OpenLane runs artifacts"
+	@echo "  make clean       : Clean up simulation work directory and logs"
 	@echo "================================================================="
 
 # Create working library
@@ -114,3 +115,21 @@ verilator_test:
 clean:
 	@echo ">>> Cleaning build artifacts... <<<"
 	rm -rf $(SIM_DIR) transcript *.wlf *.vcd covhtmlreport vsim.wlf
+
+#===============================================================================
+# OpenLane 2 Synthesis & ASIC Flow Targets
+#===============================================================================
+OPENLANE_WRAPPER = ./scripts/run_openlane.sh
+
+synth:
+	@chmod +x $(OPENLANE_WRAPPER)
+	$(OPENLANE_WRAPPER) synth
+
+flow:
+	@chmod +x $(OPENLANE_WRAPPER)
+	$(OPENLANE_WRAPPER) flow
+
+clean-synth:
+	@echo ">>> Cleaning OpenLane run artifacts... <<<"
+	rm -rf openlane/runs runs
+

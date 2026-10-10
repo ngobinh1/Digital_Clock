@@ -1,29 +1,34 @@
-# Design Intent & Architectural Decisions (v2.3.0 Output Switch & Zero-Drift Clock)
+# Design Intent & Architectural Decisions (v2.4.0 Universal Synchronous Architecture)
 
 ## 1. Objective & Scope
-The `HMS_Timer` IP Core is designed to provide an accurate, robust, power/area-optimized, and synthesizable digital time-keeping solution for ASIC/FPGA designs operating on a synchronous 1 MHz clock domain with Integrated Clock Gating (ICG).
+The `HMS_Timer` IP Core is designed to provide an accurate, robust, power/area-optimized, and synthesizable digital time-keeping solution universally portable across both FPGA and ASIC designs. It operates on a single synchronous 1 MHz master clock domain with single-cycle Pulse Clock Enables (Tick Generation), zero Clock Domain Crossing (CDC), zero clock skew, and 100% pure structural top-level wiring.
 
 ---
 
 ## 2. Key Architectural Decisions (Why vs What)
 
-### 2.1 Integrated Clock Gating (ICG) on Low-Frequency Counters
-- **Problem:** When feeding a 1 MHz clock continuously to 1 Hz, 1/60 Hz, and 1/3600 Hz counters, the internal clock pin inverters of all Flip-Flops toggle at 1 MHz, wasting significant dynamic power ($P_{clk\_pin} = C_{clk} V_{DD}^2 f_{clk}$).
-- **Decision:** Instantiate glitch-free Integrated Clock Gating (ICG) cells (`icg_cell.sv`) for each sub-module:
-  - `gated_clk_1khz` for Prescaler Stage 2 and Debouncers (1,000 toggles/s).
-  - `gated_clk_sec` for Second Counter (1 toggle/s in RUN mode / load).
-  - `gated_clk_min` for Minute Counter (1 toggle/60s in RUN mode / load).
-  - `gated_clk_hour` for Hour Counter (1 toggle/3600s in RUN mode / load).
-  - `gated_clk_fsm` for Mode Controller.
-- **Glitch Immunity & STA Synchronicity:** Each ICG cell utilizes an active-low transparent latch to hold the enable signal stable during the positive half of the clock cycle, preventing any runt pulses/glitches. Gated clocks are derived directly from the root 1 MHz clock, maintaining a 100% single synchronous clock domain with zero CDC risk.
-- **DFT / Scan Testability:** Each ICG cell includes a `test_mode` port that forces the gate open during ATPG scan tests, guaranteeing 100% test coverage.
+### 2.1 Universal Synchronous Single-Clock Domain Architecture with Pulse Clock Enable
+- **Problem with Manual ICG:** 
+  - Instantiating discrete Integrated Clock Gating (ICG) cells in RTL creates multiple gated clock branches (`gated_clk_*`). On FPGA architectures (Xilinx 7-Series/UltraScale, Intel Cyclone/MAX), discrete clock gating fragments the clock tree, exhausts limited global clock buffers (`BUFG`), introduces significant clock skew, and causes Design Rule Check (DRC) violations due to transparent latch primitives.
+  - Furthermore, maintaining separate architectures or parameter switches (`TARGET_FPGA`) complicates design validation and cross-technology portability.
+- **Decision:**
+  - Standardize 100% of the design on a **Single Synchronous 1 MHz Clock Domain** (`clk`) with single-cycle pulse Clock Enables (`CE`).
+  - Eliminate all manual ICG cells (`icg_cell.sv`) and the centralized clock control unit (`clock_control_unit.sv`).
+  - All registers in sub-modules (`button_debouncer`, `mode_controller`, `second_counter`, `minute_counter`, `hour_counter`) run on `posedge clk`, gating updates via native clock enables (`tick_1khz`, `sec_tick`, `sec_rollover`, `min_rollover`, `load_en`).
+- **FPGA Benefits:**
+  - Consumes exactly **1 Global Clock Buffer (BUFG)** for the entire chip.
+  - Maps directly into native Flip-Flop Clock Enable (`CE`) pins in FPGA logic slices (e.g., AMD/Xilinx `FDRE` primitives).
+  - Guarantees zero clock skew, zero hold-time violations across branches, and zero CDC risks.
+- **ASIC Benefits (Automatic Clock Gating Insertion - ACGI):**
+  - Modern ASIC synthesis compilers (Synopsys Design Compiler with `compile_ultra -gate_clock`, Cadence Genus with `set_db lp_insert_clock_gating true`, OpenLane/Yosys) natively infer clock gating on registers controlled by `if (clk_en)` conditions.
+  - The synthesis tool automatically inserts technology-matched PDK standard cell ICGs (e.g., `sky130_fd_sc_hd__dlclkp_*`) balanced within the clock tree during Clock Tree Synthesis (CTS), achieving the exact same dynamic power reduction (>99.9% clock pin power saved on counters) without non-portable manual RTL constructs.
 
 ### 2.2 Multi-Stage Cascaded Prescaler & Frequency Matching (PPA Optimization)
 - **Decision:** 2-stage cascaded frequency divider (`clk_prescaler`):
-  - Stage 1: Modulo-1000 (10-bit) dividing 1 MHz to 1 kHz (`tick_1khz`).
-  - Stage 2: Modulo-1000 (10-bit) dividing 1 kHz to 1 Hz (`sec_tick`).
-  - Debouncers: Sample at 1 kHz (`gated_clk_1khz`) using 5-bit counters (0..17) instead of 15-bit counters at 1 MHz.
-- **Rationale:** Reduces 1 MHz toggling counter bits from 65 bits down to 10 bits (84.6% reduction). Debouncer logic and Stage 2 prescaler only switch at 1 kHz (99.9% lower switching activity).
+  - Stage 1: Modulo-1000 (10-bit) dividing 1 MHz to produce a 1-cycle 1 kHz pulse (`tick_1khz`).
+  - Stage 2: Modulo-1000 (10-bit) dividing 1 kHz to produce a 1-cycle 1 Hz pulse (`sec_tick`).
+  - Debouncers: Sample at 1 kHz using `tick_1khz` as clock enable with 5-bit counters (0..17) on the 1 MHz clock, instead of 15-bit counters at 1 MHz.
+- **Rationale:** Reduces 1 MHz toggling counter bits from 65 bits down to 10 bits (84.6% reduction). Debouncer logic and Stage 2 prescaler only switch when `tick_1khz` is asserted (99.9% lower switching activity).
 
 ### 2.3 2-Stage Synchronizer + 1kHz-Sampled 20ms Debounce with ±10% Tolerance & Auto-Repeat
 - **Decision:** Asynchronous push buttons (`sel_in`, `up_in`, `down_in`) pass through a 2-FF synchronizer followed by a 1kHz-sampled 20ms continuous-hold counter with $\pm 10\%$ tolerance band ($18\text{ ms} \dots 22\text{ ms}$).
@@ -51,10 +56,14 @@ The `HMS_Timer` IP Core is designed to provide an accurate, robust, power/area-o
 - **Decision:** If the user stays in any adjustment mode (`ADJ_SEC`, `ADJ_MIN`, `ADJ_HOUR`) for 5 consecutive seconds without any button activity, the system automatically exits to `MODE_RUN` with `load_en = 0`.
 - **Rationale:** Discards uncommitted buffer changes and seamlessly returns the display to the accurate background counter.
 
-### 2.8 Reset Synchronization & Metastability Prevention (`reset_sync`)
-- **Problem:** When an asynchronous external reset signal (`rstn`) is deasserted asynchronously, its rising edge can violate the recovery or removal time of flip-flops in downstream modules (`clk_prescaler`, `button_controller`, `mode_controller`, counters), causing metastability and unpredictable system startup states.
-- **Decision:** Implement a dedicated 2-stage Flip-Flop Reset Synchronizer (`reset_sync.sv`):
-  - **Asynchronous Assert:** Drops `rstn_sync = 0` immediately when `rstn = 0` without waiting for clock edges, guaranteeing immediate reset.
-  - **Synchronous Deassert:** Propagates `rstn_sync = 1` synchronously on the 2nd rising edge of `clk` (2 µs delay), ensuring all downstream flip-flops release from reset simultaneously and cleanly with zero recovery/removal violations.
-  - **Synthesis Attributes:** Applies `(* async_reg = "true" *)` to keep synchronizer flip-flops in close physical proximity and prevent unwanted shift-register optimization.
-  - **DFT Scan Bypass:** Integrates a static `test_mode` multiplexer to bypass the synchronizer during ATPG scan testing for full fault controllability.
+### 2.8 Universal 2-Stage Synchronous Reset Synchronizer (`reset_sync`)
+- **Problem:** Asynchronous reset deassertion can violate recovery and removal timing on downstream flip-flops, leading to metastability and inconsistent startup states.
+- **Decision:** Implement a clean universal 2-stage Flip-Flop Synchronous Reset Synchronizer (`reset_sync.sv`):
+  - Cascaded 2 D-flip-flops running on `posedge clk`.
+  - Filters asynchronous transients and aligns `rstn_sync` to the clock domain.
+  - Synthesis attributes `(* async_reg = "true" *)` prevent SRL inference and keep registers adjacent in physical placement.
+  - Downstream modules utilize clean synchronous reset (`if (!rstn)`) mapping directly to synchronous reset control sets on FPGA and high-performance ASIC standard cell libraries.
+
+### 2.9 Pure Structural Top-Level Interconnect (`hms_timer`)
+- **Decision:** `hms_timer.sv` contains 0 `assign` statements and 0 `always` blocks.
+- **Rationale:** Eliminates glue logic at the top level, ensuring that `hms_timer` is strictly a structural harness interconnecting self-contained sub-modules. Any internal control logic is encapsulated within its respective functional module.

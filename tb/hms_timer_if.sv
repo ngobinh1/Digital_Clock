@@ -29,11 +29,8 @@ interface hms_timer_if #(
     logic [SEC_WIDTH-1:0]  s_out;
 
     // Internal probe signals for deep-cycle verification
+    logic                  rstn_sync;
     logic                  tick_1khz;
-    logic                  gated_clk_1khz;
-    logic                  gated_clk_sec;
-    logic                  gated_clk_min;
-    logic                  gated_clk_hour;
     logic                  sel_pulse;
     logic                  up_pulse;
     logic                  down_pulse;
@@ -116,10 +113,10 @@ interface hms_timer_if #(
     assert_h_out_range: assert property (p_h_out_range)
         else $error("[SVA FAIL] h_out out of range (0..23): %0d", h_out);
 
-    // A4: Synchronous Reset Clear Check
+    // A4: Synchronous Reset Clear Check (Checked on cycle N+1 after synchronous reset active)
     property p_reset_state;
         @(posedge clk)
-        (!rstn) |-> (s_out == 6'd0 && m_out == 6'd0 && h_out == 5'd0);
+        (!rstn_sync) |=> (s_out == 6'd0 && m_out == 6'd0 && h_out == 5'd0);
     endproperty
     assert_reset_state: assert property (p_reset_state)
         else $error("[SVA FAIL] Outputs not zero during reset: H=%0d M=%0d S=%0d", h_out, m_out, s_out);

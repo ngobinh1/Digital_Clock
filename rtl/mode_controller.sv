@@ -10,6 +10,7 @@
 //                without asserting load_en (discarding uncommitted edits)
 //              - Commit on Exit: Asserting 1-cycle load_en pulse when completing
 //                the adjustment loop (HOUR -> RUN via sel_pulse)
+//              - Pure synchronous single-clock domain design (1 MHz)
 // Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
@@ -23,8 +24,8 @@ module mode_controller #(
     parameter int MIN_WIDTH   = 6,
     parameter int HOUR_WIDTH  = 5
 )(
-    input  logic                  clk,          // System Clock (gated_clk_fsm)
-    input  logic                  rstn,         // Asynchronous Reset, Active-Low
+    input  logic                  clk,          // System Master Clock (1 MHz)
+    input  logic                  rstn,         // Reset, Active-Low
     input  logic                  sel_pulse,    // 1-Cycle Pulse from Select Button (Debounced)
     input  logic                  up_pulse,     // 1-Cycle Pulse from Up Button (Debounced)
     input  logic                  down_pulse,   // 1-Cycle Pulse from Down Button (Debounced)
@@ -66,9 +67,9 @@ module mode_controller #(
     assign any_button = sel_pulse | up_pulse | down_pulse;
 
     //--------------------------------------------------------------------------
-    // FSM & Inactivity Timeout Sequential Logic (Posedge clk, Asynchronous rstn)
+    // FSM & Inactivity Timeout Sequential Logic (Pure Synchronous)
     //--------------------------------------------------------------------------
-    always_ff @(posedge clk or negedge rstn) begin
+    always_ff @(posedge clk) begin
         if (!rstn) begin
             state_reg    <= MODE_RUN;
             timeout_cnt  <= '0;

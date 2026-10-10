@@ -1,19 +1,17 @@
 //==============================================================================
 // File: hms_timer.sv
-// Module: hms_timer (Top-Level IP Core - v2.3.0 Decoupled & Output Switch)
+// Module: hms_timer (Top-Level IP Core - Universal Synchronous Architecture)
 // Description: Hour-Minute-Second Real-Time Timer IP Core with:
-//              - Single synchronous 1 MHz clock domain with Glitch-Free ICG
-//              - Asynchronous active-low reset (rstn)
-//              - DFT/Scan test_mode bypass support
-//              - Pure 1 kHz Clock-Driven Button Debouncers (Zero 1 MHz clock routing to debouncers)
-//              - Top-level single-cycle pulse alignment (1 MHz domain)
-//              - Integrated Clock Gating (ICG) on Debouncers, Prescaler Stage 2,
-//                FSM, Second, Minute, and Hour Counters
-//              - Clock pin toggle power reduced by >99.99% for low-frequency counters
+//              - Single synchronous 1 MHz master clock domain throughout the entire IP core
+//              - Asynchronous active-low reset (rstn) synchronized via 2-stage FF
+//              - Cascaded Prescaler generating 1-cycle Clock Enable ticks (1 kHz, 1 Hz)
+//              - 1 kHz Clock-Enabled Button Debouncers with ±10% tolerance (18..22ms)
 //              - 4-State Mode FSM with 5s Inactivity Timeout & Time Edit Buffer
 //              - Continuous Background Real-Time Counters (Zero-Drift Clock)
 //              - Dedicated Output Switch MUX for clean display separation
 //              - Synchronous parallel load commit upon exiting adjustment loop
+//              - 100% portable single-clock synchronous architecture for both ASIC & FPGA
+//              - Pure structural interconnect (zero internal logic processing)
 // Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
@@ -35,8 +33,7 @@ module hms_timer #(
     parameter int HOUR_WIDTH        = 5                                                              // Hour Output Bit Width (0..23)
 )(
     input  logic                  clk,        // System Master Clock (1 MHz)
-    input  logic                  rstn,       // Asynchronous Reset, Active-Low
-    input  logic                  test_mode,  // DFT / Scan Test Bypass Enable (Default: 0)
+    input  logic                  rstn,       // Reset, Active-Low
     input  logic                  sel_in,     // Mode Selection Button (20ms Debounced)
     input  logic                  up_in,      // Value Increment Button (20ms Debounced)
     input  logic                  down_in,    // Value Decrement Button (20ms Debounced)
@@ -44,12 +41,6 @@ module hms_timer #(
     output logic [MIN_WIDTH-1:0]  m_out,      // Real-Time Minute Output (0..59)
     output logic [SEC_WIDTH-1:0]  s_out       // Real-Time Second Output (0..59)
 );
-
-    // Mode encodings
-    localparam logic [1:0] MODE_RUN      = 2'b00;
-    localparam logic [1:0] MODE_ADJ_SEC  = 2'b01;
-    localparam logic [1:0] MODE_ADJ_MIN  = 2'b10;
-    localparam logic [1:0] MODE_ADJ_HOUR = 2'b11;
 
     //--------------------------------------------------------------------------
     // Internal Interconnect Signals
@@ -72,47 +63,16 @@ module hms_timer #(
     logic                  min_rollover;  // Rollover enable pulse from minute to hour counter
 
     //--------------------------------------------------------------------------
-    // Gated Clock Signals (Output from ICG Cells)
-    //--------------------------------------------------------------------------
-    logic                  gated_clk_1khz; // 1 kHz Gated Clock (Debouncers & Prescaler Stage 2)
-    logic                  gated_clk_sec;  // 1 Hz / Load Gated Clock (Second Counter)
-    logic                  gated_clk_min;  // 1/60 Hz / Load Gated Clock (Minute Counter)
-    logic                  gated_clk_hour; // 1/3600 Hz / Load Gated Clock (Hour Counter)
-    logic                  gated_clk_fsm;  // Event / 1 Hz Gated Clock (Mode Controller FSM)
-
-    //--------------------------------------------------------------------------
-    // Submodule 0: Asynchronous Assert, Synchronous Deassert Reset Synchronizer
+    // Submodule 0: 2-Stage Flip-Flop Reset Synchronizer
     //--------------------------------------------------------------------------
     reset_sync u_reset_sync (
         .clk        (clk),
         .rstn_async (rstn),
-        .test_mode  (test_mode),
         .rstn_sync  (rstn_sync)
     );
 
     //--------------------------------------------------------------------------
-    // Submodule 1: Centralized Clock Management & Clock Gating Unit (CCU)
-    //--------------------------------------------------------------------------
-    clock_control_unit u_clock_control_unit (
-        .clk            (clk),
-        .test_mode      (test_mode),
-        .tick_1khz      (tick_1khz),
-        .sec_tick       (sec_tick),
-        .sec_rollover   (sec_rollover),
-        .min_rollover   (min_rollover),
-        .sel_pulse      (sel_pulse),
-        .up_pulse       (up_pulse),
-        .down_pulse     (down_pulse),
-        .load_en        (load_en),
-        .gated_clk_1khz (gated_clk_1khz),
-        .gated_clk_sec  (gated_clk_sec),
-        .gated_clk_min  (gated_clk_min),
-        .gated_clk_hour (gated_clk_hour),
-        .gated_clk_fsm  (gated_clk_fsm)
-    );
-
-    //--------------------------------------------------------------------------
-    // Submodule 2: Multi-Stage Cascaded Frequency Prescaler
+    // Submodule 1: Multi-Stage Cascaded Frequency Prescaler
     //--------------------------------------------------------------------------
     clk_prescaler #(
         .CLK_FREQ_HZ       (CLK_FREQ_HZ),
@@ -128,25 +88,25 @@ module hms_timer #(
     );
 
     //--------------------------------------------------------------------------
-    // Submodule 3: Multi-Channel Button Controller & Pulse Alignment Subsystem
+    // Submodule 2: Multi-Channel Button Controller & Pulse Alignment Subsystem
     //--------------------------------------------------------------------------
     button_controller #(
         .DEBOUNCE_TICKS   (DEBOUNCE_TICKS),
         .DEBOUNCE_TOL_PCT (DEBOUNCE_TOL_PCT)
     ) u_button_controller (
-        .clk            (clk),
-        .rstn           (rstn_sync),
-        .gated_clk_1khz (gated_clk_1khz),
-        .sel_in         (sel_in),
-        .up_in          (up_in),
-        .down_in        (down_in),
-        .sel_pulse      (sel_pulse),
-        .up_pulse       (up_pulse),
-        .down_pulse     (down_pulse)
+        .clk        (clk),
+        .rstn       (rstn_sync),
+        .tick_1khz  (tick_1khz),
+        .sel_in     (sel_in),
+        .up_in      (up_in),
+        .down_in    (down_in),
+        .sel_pulse  (sel_pulse),
+        .up_pulse   (up_pulse),
+        .down_pulse (down_pulse)
     );
 
     //--------------------------------------------------------------------------
-    // Submodule 4: Mode Controller & Inactivity Timeout FSM (Clocked by Gated Clock)
+    // Submodule 3: Mode Controller & Inactivity Timeout FSM
     //--------------------------------------------------------------------------
     mode_controller #(
         .TIMEOUT_SEC (TIMEOUT_SEC),
@@ -154,7 +114,7 @@ module hms_timer #(
         .MIN_WIDTH   (MIN_WIDTH),
         .HOUR_WIDTH  (HOUR_WIDTH)
     ) u_mode_controller (
-        .clk        (gated_clk_fsm),
+        .clk        (clk),
         .rstn       (rstn_sync),
         .sel_pulse  (sel_pulse),
         .up_pulse   (up_pulse),
@@ -171,12 +131,12 @@ module hms_timer #(
     );
 
     //--------------------------------------------------------------------------
-    // Submodule 5: Modulo-60 Second Counter (Clocked by Gated Clock 1Hz / Load)
+    // Submodule 4: Modulo-60 Second Counter (Continuous Background Real-Time Counter)
     //--------------------------------------------------------------------------
     second_counter #(
         .SEC_WIDTH (SEC_WIDTH)
     ) u_second_counter (
-        .clk          (gated_clk_sec),
+        .clk          (clk),
         .rstn         (rstn_sync),
         .sec_tick     (sec_tick),
         .load_en      (load_en),
@@ -186,12 +146,12 @@ module hms_timer #(
     );
 
     //--------------------------------------------------------------------------
-    // Submodule 6: Modulo-60 Minute Counter (Clocked by Gated Clock 1/60Hz / Load)
+    // Submodule 5: Modulo-60 Minute Counter (Continuous Background Real-Time Counter)
     //--------------------------------------------------------------------------
     minute_counter #(
         .MIN_WIDTH (MIN_WIDTH)
     ) u_minute_counter (
-        .clk          (gated_clk_min),
+        .clk          (clk),
         .rstn         (rstn_sync),
         .sec_rollover (sec_rollover),
         .load_en      (load_en),
@@ -201,12 +161,12 @@ module hms_timer #(
     );
 
     //--------------------------------------------------------------------------
-    // Submodule 7: Modulo-24 Hour Counter (Clocked by Gated Clock 1/3600Hz / Load)
+    // Submodule 6: Modulo-24 Hour Counter (Continuous Background Real-Time Counter)
     //--------------------------------------------------------------------------
     hour_counter #(
         .HOUR_WIDTH (HOUR_WIDTH)
     ) u_hour_counter (
-        .clk          (gated_clk_hour),
+        .clk          (clk),
         .rstn         (rstn_sync),
         .min_rollover (min_rollover),
         .load_en      (load_en),
@@ -215,7 +175,7 @@ module hms_timer #(
     );
 
     //--------------------------------------------------------------------------
-    // Submodule 8: Output Switch Display Multiplexer
+    // Submodule 7: Output Switch Display Multiplexer
     //--------------------------------------------------------------------------
     output_switch #(
         .SEC_WIDTH  (SEC_WIDTH),

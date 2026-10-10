@@ -17,6 +17,7 @@ work/
 .$*.bkp
 *.drawio.bkp
 *.drawio.dtmp
-__pycache__/
-*.py[cod]
+# OpenLane ASIC synthesis and flow runs
+openlane/runs/
+runs/
 

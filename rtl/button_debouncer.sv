@@ -1,16 +1,15 @@
 //==============================================================================
 // File: button_debouncer.sv
-// Module: button_debouncer (Pure 1 kHz Single-Clock Architecture with ±10% Tolerance)
-// Description: Pure 1 kHz Clock-Driven 20ms Debounce & Auto-Repeat IP Core with ±10% Tolerance.
-//              - Single-Clock Domain: Runs 100% on the 1 kHz clock (clk).
-//                No 1 MHz master clock is routed into this module.
-//              - 2-Stage D-FF Synchronizer: Samples asynchronous button at 1 kHz
+// Module: button_debouncer (Universal Synchronous Architecture with ±10% Tolerance)
+// Description: Pure Synchronous 20ms Debounce & Auto-Repeat IP Core with ±10% Tolerance.
+//              - Single-Clock Domain: Runs 100% on master clock (clk) with clk_en.
+//              - 2-Stage D-FF Synchronizer: Samples asynchronous button at 1 kHz (clk_en)
 //                to eliminate contact bounce and metastability.
 //              - ±10% Tolerance Parameterization: Calculates effective threshold:
 //                EFFECTIVE_TICKS = DEBOUNCE_TICKS - (DEBOUNCE_TICKS * DEBOUNCE_TOL_PCT / 100)
 //                Default: 20 ticks - 10% = 18 ticks (18 ms at 1 kHz).
 //              - Glitch Rejection: Presses < 18ms are strictly ignored.
-//              - Auto-Repeat: Emits 1-cycle-of-1kHz pulse (btn_event) every 18ms
+//              - Auto-Repeat: Emits 1-cycle master clock pulse (btn_event) every 18ms
 //                when button is held continuously.
 // Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
@@ -27,21 +26,20 @@ module button_debouncer #(
     localparam int EFFECTIVE_TICKS = (DEBOUNCE_MIN_TICKS > 0) ? DEBOUNCE_MIN_TICKS : 1,      // 18 ticks = 18 ms
     localparam int CNT_WIDTH       = (EFFECTIVE_TICKS > 1) ? $clog2(EFFECTIVE_TICKS) : 1      // 5 bits for 18 ticks
 )(
-    input  logic clk,        // 1 kHz Low-Frequency Clock (gated_clk_1khz)
-    input  logic rstn,       // Asynchronous Reset, Active-Low
+    input  logic clk,        // System Master Clock (1 MHz)
+    input  logic rstn,       // Reset, Active-Low
+    input  logic clk_en,     // Clock Enable (tick_1khz pulse from prescaler)
     input  logic btn_in,     // Asynchronous Button Input (Active-High)
-    output logic btn_event   // 1-Cycle Pulse on 1 kHz clock domain (Active for 1ms)
+    output logic btn_event   // Synchronous 1-Cycle Pulse Event Output
 );
 
-    //--------------------------------------------------------------------------
-    // 2-Stage Synchronizer at 1 kHz sampling rate
-    //--------------------------------------------------------------------------
+    // 2-Stage D-FF Synchronizer sampled at 1 kHz
     logic [1:0] sync_reg;
 
-    always_ff @(posedge clk or negedge rstn) begin
+    always_ff @(posedge clk) begin
         if (!rstn) begin
             sync_reg <= 2'b00;
-        end else begin
+        end else if (clk_en) begin
             sync_reg <= {sync_reg[0], btn_in};
         end
     end
@@ -49,33 +47,31 @@ module button_debouncer #(
     logic btn_sync;
     assign btn_sync = sync_reg[1];
 
-    //--------------------------------------------------------------------------
-    // 5-bit Debounce Counter & Auto-Repeat Logic (100% 1 kHz Clocked)
-    //--------------------------------------------------------------------------
     generate
         if (EFFECTIVE_TICKS <= 1) begin : gen_passthrough
-            // Edge detector / passthrough mode for 1-cycle debounce
             logic btn_d;
-            always_ff @(posedge clk or negedge rstn) begin
+            always_ff @(posedge clk) begin
                 if (!rstn) begin
                     btn_d     <= 1'b0;
                     btn_event <= 1'b0;
-                end else begin
+                end else if (clk_en) begin
                     btn_d     <= btn_sync;
                     btn_event <= btn_sync & ~btn_d;
+                end else begin
+                    btn_event <= 1'b0;
                 end
             end
         end else begin : gen_debouncer
             logic [CNT_WIDTH-1:0] timer_cnt;
 
-            always_ff @(posedge clk or negedge rstn) begin
+            always_ff @(posedge clk) begin
                 if (!rstn) begin
                     timer_cnt <= '0;
                     btn_event <= 1'b0;
-                end else begin
+                end else if (clk_en) begin
                     if (btn_sync) begin
                         if (timer_cnt >= (EFFECTIVE_TICKS - 1)) begin
-                            btn_event <= 1'b1; // Emit 1-cycle-of-1kHz event pulse
+                            btn_event <= 1'b1; // Emit 1-cycle master clock event pulse
                             timer_cnt <= '0;   // Reset counter for auto-repeat
                         end else begin
                             btn_event <= 1'b0;
@@ -85,6 +81,8 @@ module button_debouncer #(
                         timer_cnt <= '0;
                         btn_event <= 1'b0;
                     end
+                end else begin
+                    btn_event <= 1'b0; // Auto-clear after 1 master clock cycle
                 end
             end
         end

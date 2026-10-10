@@ -1,0 +1,34 @@
+#===============================================================================
+# OpenLane 2 Design Configuration for HMS_Timer IP Core
+# Target PDK: SkyWater Sky130A (sky130_fd_sc_hd)
+#===============================================================================
+
+DESIGN_NAME: hms_timer
+
+VERILOG_FILES:
+  - dir::../rtl/reset_sync.sv
+  - dir::../rtl/clk_prescaler.sv
+  - dir::../rtl/button_debouncer.sv
+  - dir::../rtl/button_controller.sv
+  - dir::../rtl/second_counter.sv
+  - dir::../rtl/minute_counter.sv
+  - dir::../rtl/hour_counter.sv
+  - dir::../rtl/mode_controller.sv
+  - dir::../rtl/output_switch.sv
+  - dir::../rtl/hms_timer.sv
+
+# Clock Constraints
+CLOCK_PORT: clk
+CLOCK_PERIOD: 1000.0  # 1 MHz Master Clock (1000 ns)
+
+# Linting Controls
+ERROR_ON_LINTER_WARNINGS: false
+
+# Physical Design Parameters (dùng khi chạy Full Flow)
+FP_PIN_ORDER_CFG: dir::pin_order.cfg
+
+# PDK Sky130 Specific Configurations
+pdk::sky130*:
+  FP_CORE_UTIL: 40
+  PL_TARGET_DENSITY: 0.45
+  SYNTH_STRATEGY: "AREA 0"

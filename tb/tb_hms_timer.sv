@@ -67,7 +67,6 @@ module tb_hms_timer;
     ) dut (
         .clk       (vif.clk),
         .rstn      (vif.rstn),
-        .test_mode (1'b0),
         .sel_in    (vif.sel_in),
         .up_in     (vif.up_in),
         .down_in   (vif.down_in),
@@ -77,11 +76,8 @@ module tb_hms_timer;
     );
 
     // Bind internal probes to interface for verification visibility
+    assign vif.rstn_sync      = dut.rstn_sync;
     assign vif.tick_1khz      = dut.tick_1khz;
-    assign vif.gated_clk_1khz = dut.gated_clk_1khz;
-    assign vif.gated_clk_sec  = dut.gated_clk_sec;
-    assign vif.gated_clk_min  = dut.gated_clk_min;
-    assign vif.gated_clk_hour = dut.gated_clk_hour;
     assign vif.sel_pulse      = dut.sel_pulse;
     assign vif.up_pulse       = dut.up_pulse;
     assign vif.down_pulse     = dut.down_pulse;

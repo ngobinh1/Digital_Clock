@@ -9,6 +9,7 @@
 //                * Stage 2 counter switches at 1 kHz (1000x toggle rate reduction).
 //                * Debouncer modules sample on tick_1khz with small 5-bit counters.
 //                * Shortens adder critical path for timing closure / higher Fmax.
+//                * Pure synchronous single-clock domain design.
 // Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
@@ -26,7 +27,7 @@ module clk_prescaler #(
     parameter int CNT_1HZ_WIDTH     = (DIV_1HZ_MAX > 0) ? $clog2(DIV_1HZ_MAX + 1) : 1
 )(
     input  logic clk,        // System Clock (1 MHz)
-    input  logic rstn,       // Asynchronous Reset, Active-Low
+    input  logic rstn,       // Reset, Active-Low
     output logic tick_1khz,  // 1 kHz periodic tick (1-cycle pulse)
     output logic sec_tick    // 1 Hz periodic tick (1-cycle pulse)
 );
@@ -39,16 +40,12 @@ module clk_prescaler #(
 
     generate
         if (DIV_1KHZ_MAX == 0) begin : gen_div1_stage1
-            always_ff @(posedge clk or negedge rstn) begin
-                if (!rstn) begin
-                    r_cnt_1khz <= '0;
-                end else begin
-                    r_cnt_1khz <= '0;
-                end
+            always_ff @(posedge clk) begin
+                r_cnt_1khz <= '0;
             end
             assign w_tick_1khz = 1'b1;
         end else begin : gen_cnt_stage1
-            always_ff @(posedge clk or negedge rstn) begin
+            always_ff @(posedge clk) begin
                 if (!rstn) begin
                     r_cnt_1khz <= '0;
                 end else begin
@@ -73,16 +70,12 @@ module clk_prescaler #(
 
     generate
         if (DIV_1HZ_MAX == 0) begin : gen_div1_stage2
-            always_ff @(posedge clk or negedge rstn) begin
-                if (!rstn) begin
-                    r_cnt_1hz <= '0;
-                end else begin
-                    r_cnt_1hz <= '0;
-                end
+            always_ff @(posedge clk) begin
+                r_cnt_1hz <= '0;
             end
             assign w_sec_tick = w_tick_1khz;
         end else begin : gen_cnt_stage2
-            always_ff @(posedge clk or negedge rstn) begin
+            always_ff @(posedge clk) begin
                 if (!rstn) begin
                     r_cnt_1hz <= '0;
                 end else begin
