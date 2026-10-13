@@ -102,7 +102,7 @@ class hms_scoreboard;
         end
     endfunction
 
-    // Real-Time 1-Second Cascade Tick
+    // Real-Time 1-Second Cascade Pulse
     function void advance_one_second_cascade();
         if (exp_s == 59) begin
             exp_s = 0;
@@ -162,9 +162,9 @@ class hms_scoreboard;
         $display(" TOTAL FAILED CHECKS           : %0d", failed_checks);
         $display("--------------------------------------------------------------------------------");
         if (failed_checks == 0 && total_checks > 0) begin
-            $display("%s >>> VERIFICATION STATUS: 100%% PASSED (TAPE-OUT READY QUALITY) <<< %s", COLOR_GREEN, COLOR_RESET);
+            $display("%s >>> VERIFICATION STATUS: 100%% PASSED (TAPE-OUT READY QUALITY) <<< %s", PL_COLOR_GREEN, PL_COLOR_RESET);
         end else begin
-            $display("%s >>> VERIFICATION STATUS: FAILED (%0d FAILURES DETECTED) <<< %s", COLOR_RED, failed_checks, COLOR_RESET);
+            $display("%s >>> VERIFICATION STATUS: FAILED (%0d FAILURES DETECTED) <<< %s", PL_COLOR_RED, failed_checks, PL_COLOR_RESET);
         end
         $display("================================================================================\n");
     endfunction

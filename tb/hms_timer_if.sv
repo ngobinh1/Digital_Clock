@@ -11,34 +11,34 @@
 `timescale 1ns / 1ps
 
 interface hms_timer_if #(
-    parameter int SEC_WIDTH  = 6,
-    parameter int MIN_WIDTH  = 6,
-    parameter int HOUR_WIDTH = 5
+    parameter int P_SEC_WIDTH  = 6,
+    parameter int P_MIN_WIDTH  = 6,
+    parameter int P_HOUR_WIDTH = 5
 )(
     input logic clk
 );
     // Asynchronous / Control inputs
-    logic                  rstn;
-    logic                  sel_in;
-    logic                  up_in;
-    logic                  down_in;
+    logic                    rstn;
+    logic                    sel_in;
+    logic                    up_in;
+    logic                    down_in;
 
     // Time outputs
-    logic [HOUR_WIDTH-1:0] h_out;
-    logic [MIN_WIDTH-1:0]  m_out;
-    logic [SEC_WIDTH-1:0]  s_out;
+    logic [P_HOUR_WIDTH-1:0] h_out;
+    logic [P_MIN_WIDTH-1:0]  m_out;
+    logic [P_SEC_WIDTH-1:0]  s_out;
 
     // Internal probe signals for deep-cycle verification
-    logic                  rstn_sync;
-    logic                  tick_1khz;
-    logic                  sel_pulse;
-    logic                  up_pulse;
-    logic                  down_pulse;
-    logic                  sec_tick;
-    logic [1:0]            adj_mode;
-    logic                  load_en;
-    logic                  sec_rollover;
-    logic                  min_rollover;
+    logic                    rstn_sync;
+    logic                    pulse_1khz;
+    logic                    sel_pulse;
+    logic                    up_pulse;
+    logic                    down_pulse;
+    logic                    sec_pulse;
+    logic [1:0]              adj_mode;
+    logic                    load_en;
+    logic                    sec_rollover;
+    logic                    min_rollover;
 
     //--------------------------------------------------------------------------
     // Driver Clocking Block (Synchronous stimulus driving)
@@ -70,7 +70,7 @@ interface hms_timer_if #(
         input sel_pulse;
         input up_pulse;
         input down_pulse;
-        input sec_tick;
+        input sec_pulse;
         input adj_mode;
         input load_en;
         input sec_rollover;
@@ -124,10 +124,10 @@ interface hms_timer_if #(
     // A5: Rollover Synchronization Check
     property p_sec_rollover_sync;
         @(posedge clk) disable iff (!rstn)
-        sec_rollover |-> sec_tick;
+        sec_rollover |-> sec_pulse;
     endproperty
     assert_sec_rollover_sync: assert property (p_sec_rollover_sync)
-        else $error("[SVA FAIL] sec_rollover active without sec_tick!");
+        else $error("[SVA FAIL] sec_rollover active without sec_pulse!");
 
     property p_min_rollover_sync;
         @(posedge clk) disable iff (!rstn)

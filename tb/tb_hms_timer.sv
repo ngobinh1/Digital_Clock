@@ -28,42 +28,42 @@ module tb_hms_timer;
 
     // Clock frequency and period configuration
     // 1 MHz Clock -> Period = 1000 ns (1 us)
-    localparam realtime CLK_PERIOD = 1000ns;
+    localparam realtime PL_CLK_PERIOD = 1000ns;
 
-    // Simulation Prescaler setting: 100 cycles per 1 second tick
-    localparam int SIM_CLK_FREQ_HZ   = 100;
-    localparam int SIM_PSC_COUNT_MAX = SIM_CLK_FREQ_HZ - 1;
-    localparam int SIM_PSC_WIDTH     = 20;
+    // Simulation Prescaler setting: 100 cycles per 1 second pulse
+    localparam int PL_SIM_CLK_FREQ_HZ   = 100;
+    localparam int PL_SIM_PSC_COUNT_MAX = PL_SIM_CLK_FREQ_HZ - 1;
+    localparam int PL_SIM_PSC_WIDTH     = 20;
 
     // Clock generator
     logic clk;
     initial begin
         clk = 1'b0;
-        forever #(CLK_PERIOD / 2.0) clk = ~clk;
+        forever #(PL_CLK_PERIOD / 2.0) clk = ~clk;
     end
 
     // Interface instantiation
     hms_timer_if #(
-        .SEC_WIDTH(6),
-        .MIN_WIDTH(6),
-        .HOUR_WIDTH(5)
+        .P_SEC_WIDTH(6),
+        .P_MIN_WIDTH(6),
+        .P_HOUR_WIDTH(5)
     ) vif (
         .clk(clk)
     );
 
     // DUT Instantiation with fast prescaler parameter for testbench execution
     hms_timer #(
-        .CLK_FREQ_HZ       (SIM_CLK_FREQ_HZ),
-        .TICK_1KHZ_FREQ_HZ (100),
-        .TICK_1HZ_FREQ_HZ  (1),
-        .DIV_1KHZ_MAX      (0),
-        .DIV_1HZ_MAX       (SIM_PSC_COUNT_MAX),
-        .DEBOUNCE_TICKS    (20), // 20 ticks nominal of sampling clock
-        .DEBOUNCE_TOL_PCT  (10), // ±10% tolerance -> EFFECTIVE_TICKS = 18
-        .TIMEOUT_SEC       (5),
-        .SEC_WIDTH         (6),
-        .MIN_WIDTH         (6),
-        .HOUR_WIDTH        (5)
+        .P_CLK_FREQ_HZ        (PL_SIM_CLK_FREQ_HZ),
+        .P_PULSE_1KHZ_FREQ_HZ (100),
+        .P_PULSE_1HZ_FREQ_HZ  (1),
+        .P_DIV_1KHZ_MAX       (0),
+        .P_DIV_1HZ_MAX        (PL_SIM_PSC_COUNT_MAX),
+        .P_DEBOUNCE_PULSES    (20), // 20 pulses nominal of sampling clock
+        .P_DEBOUNCE_TOL_PCT   (10), // ±10% tolerance -> PL_EFFECTIVE_PULSES = 18
+        .P_TIMEOUT_SEC        (5),
+        .P_SEC_WIDTH          (6),
+        .P_MIN_WIDTH          (6),
+        .P_HOUR_WIDTH         (5)
     ) dut (
         .clk       (vif.clk),
         .rstn      (vif.rstn),
@@ -77,11 +77,11 @@ module tb_hms_timer;
 
     // Bind internal probes to interface for verification visibility
     assign vif.rstn_sync      = dut.rstn_sync;
-    assign vif.tick_1khz      = dut.tick_1khz;
+    assign vif.pulse_1khz     = dut.pulse_1khz;
     assign vif.sel_pulse      = dut.sel_pulse;
     assign vif.up_pulse       = dut.up_pulse;
     assign vif.down_pulse     = dut.down_pulse;
-    assign vif.sec_tick       = dut.sec_tick;
+    assign vif.sec_pulse      = dut.sec_pulse;
     assign vif.adj_mode       = dut.adj_mode;
     assign vif.load_en        = dut.load_en;
     assign vif.sec_rollover   = dut.sec_rollover;
@@ -117,7 +117,7 @@ module tb_hms_timer;
         
         // Wait for 10 simulated seconds
         for (int i = 1; i <= 10; i++) begin
-            @(posedge vif.sec_tick);
+            @(posedge vif.sec_pulse);
             @(posedge vif.clk); #1ns;
             scoreboard.check_time(0, 0, i, $sformatf("TC2_SEC_%0d", i));
         end
@@ -376,15 +376,15 @@ module tb_hms_timer;
         driver.pulse_sel(); // HOUR -> RUN
         scoreboard.check_mode(MODE_RUN, "TC10_ENTER_RUN_MODE");
 
-        // Wait 1 second tick: 23:59:58 -> 23:59:59
-        log_info("Waiting for real-time tick to reach 23:59:59...");
-        @(posedge vif.sec_tick);
+        // Wait 1 second pulse: 23:59:58 -> 23:59:59
+        log_info("Waiting for real-time pulse to reach 23:59:59...");
+        @(posedge vif.sec_pulse);
         @(posedge vif.clk); #1ns;
         scoreboard.check_time(23, 59, 59, "TC10_COUNT_23_59_59");
 
-        // Wait 1 second tick: 23:59:59 -> 00:00:00 (Midnight Cascade Rollover!)
+        // Wait 1 second pulse: 23:59:59 -> 00:00:00 (Midnight Cascade Rollover!)
         log_info("Waiting for midnight rollover to 00:00:00...");
-        @(posedge vif.sec_tick);
+        @(posedge vif.sec_pulse);
         @(posedge vif.clk); #1ns;
         scoreboard.check_time(0, 0, 0, "TC10_MIDNIGHT_ROLLOVER_SUCCESS");
     endtask
@@ -433,7 +433,7 @@ module tb_hms_timer;
         driver.pulse_sel();
         scoreboard.check_mode(MODE_ADJ_SEC, "TC12_ENTER_SEC_MODE");
 
-        // 1. Hold UP button for 17 cycles (< 18 ticks lower tolerance threshold) -> Strictly ignored (Noise rejection)
+        // 1. Hold UP button for 17 cycles (< 18 pulses lower tolerance threshold) -> Strictly ignored (Noise rejection)
         log_info("Testing button hold below 10-percent tolerance threshold (17 cycles < 18 cycles)...");
         @(posedge vif.clk);
         vif.up_in <= 1'b1;
@@ -514,10 +514,10 @@ module tb_hms_timer;
         repeat (12) driver.pulse_up();
         scoreboard.check_time(12, 40, 25, "TC13_HOUR_MODIFIED_TO_12");
 
-        // Step 5: Do NOT commit via SEL. Instead, stay idle for 5 seconds (5 sec_ticks)
+        // Step 5: Do NOT commit via SEL. Instead, stay idle for 5 seconds (5 sec_pulses)
         log_info("Idling without any button activity to trigger 5s Inactivity Timeout...");
         repeat (5) begin
-            @(posedge vif.sec_tick);
+            @(posedge vif.sec_pulse);
         end
         repeat (3) @(posedge vif.clk); #1ns;
 
@@ -543,7 +543,7 @@ module tb_hms_timer;
 
         // Wait 3 seconds (< 5 seconds timeout)
         log_info("Waiting 3 seconds (< 5s timeout)...");
-        repeat (3) @(posedge vif.sec_tick);
+        repeat (3) @(posedge vif.sec_pulse);
         scoreboard.check_mode(MODE_ADJ_SEC, "TC14_STILL_IN_ADJ_SEC");
 
         // Press UP button to reset inactivity timer (Keep-Alive)
@@ -553,7 +553,7 @@ module tb_hms_timer;
 
         // Wait another 3 seconds (< 5s since last press)
         log_info("Waiting another 3 seconds (< 5s since last press)...");
-        repeat (3) @(posedge vif.sec_tick);
+        repeat (3) @(posedge vif.sec_pulse);
         scoreboard.check_mode(MODE_ADJ_SEC, "TC14_STILL_ALIVE_AFTER_KEEP_ALIVE");
 
         // Now explicitly commit by cycling through to MODE_RUN

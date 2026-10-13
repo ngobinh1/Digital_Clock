@@ -64,29 +64,29 @@ package hms_timer_types_pkg;
     endfunction
 
     // ANSI Color Escape Codes for Terminal Output
-    localparam string COLOR_RESET  = "\033[0m";
-    localparam string COLOR_RED    = "\033[1;31m";
-    localparam string COLOR_GREEN  = "\033[1;32m";
-    localparam string COLOR_YELLOW = "\033[1;33m";
-    localparam string COLOR_BLUE   = "\033[1;34m";
-    localparam string COLOR_CYAN   = "\033[1;36m";
-    localparam string COLOR_BOLD   = "\033[1m";
+    localparam string PL_COLOR_RESET  = "\033[0m";
+    localparam string PL_COLOR_RED    = "\033[1;31m";
+    localparam string PL_COLOR_GREEN  = "\033[1;32m";
+    localparam string PL_COLOR_YELLOW = "\033[1;33m";
+    localparam string PL_COLOR_BLUE   = "\033[1;34m";
+    localparam string PL_COLOR_CYAN   = "\033[1;36m";
+    localparam string PL_COLOR_BOLD   = "\033[1m";
 
     // Logging helpers
     function automatic void log_info(string msg);
-        $display("%s[INFO] [%0t ns] %s%s", COLOR_CYAN, $time, msg, COLOR_RESET);
+        $display("%s[INFO] [%0t ns] %s%s", PL_COLOR_CYAN, $time, msg, PL_COLOR_RESET);
     endfunction
 
     function automatic void log_pass(string msg);
-        $display("%s[PASS] [%0t ns] %s%s", COLOR_GREEN, $time, msg, COLOR_RESET);
+        $display("%s[PASS] [%0t ns] %s%s", PL_COLOR_GREEN, $time, msg, PL_COLOR_RESET);
     endfunction
 
     function automatic void log_fail(string msg);
-        $display("%s[FAIL] [%0t ns] %s%s", COLOR_RED, $time, msg, COLOR_RESET);
+        $display("%s[FAIL] [%0t ns] %s%s", PL_COLOR_RED, $time, msg, PL_COLOR_RESET);
     endfunction
 
     function automatic void log_warn(string msg);
-        $display("%s[WARN] [%0t ns] %s%s", COLOR_YELLOW, $time, msg, COLOR_RESET);
+        $display("%s[WARN] [%0t ns] %s%s", PL_COLOR_YELLOW, $time, msg, PL_COLOR_RESET);
     endfunction
 
 endpackage
