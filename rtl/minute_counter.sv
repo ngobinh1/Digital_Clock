@@ -26,7 +26,7 @@ module minute_counter #(
 
     logic [P_MIN_WIDTH-1:0] r_min;
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rstn) begin
         if (!rstn) begin
             r_min <= '0;
         end else if (load_en) begin

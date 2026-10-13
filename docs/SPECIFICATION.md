@@ -79,7 +79,7 @@ Mọi yêu cầu kỹ thuật và quyết định kiến trúc được chuẩn 
 | `REQ-PPA-03` | Tối Ưu Prescaler | `DERIVED` | Prescaler 2 tầng 10-bit rút ngắn critical path carry chain, tối ưu Fmax và công suất. |
 | `REQ-GAT-01` | Khóa Cờ Tràn | `RECOMMENDED` | Cờ tràn `sec_rollover` và `min_rollover` chỉ phát đúng 1 chu kỳ clock đồng bộ với `sec_pulse`. |
 | `REQ-UNI-01` | Kiến trúc Đồng bộ Phổ quát | `RECOMMENDED` | Chuẩn hóa kiến trúc miền clock đồng bộ duy nhất (Universal Single-Clock Domain) tương thích 100% cả FPGA (1 BUFG, Native CE) và ASIC (ACGI). |
-| `REQ-RST-01` | Đồng Bộ Hóa Reset | `RECOMMENDED` | Triển khai khối Reset Synchronizer 2-FF đồng bộ hóa hoàn toàn trên miền clock 1 MHz. |
+| `REQ-RST-01` | Đồng Bộ Hóa Reset | `RECOMMENDED` | Triển khai khối Reset Synchronizer 2-FF xác lập bất đồng bộ, giải trừ đồng bộ trên miền clock 1 MHz. |
 | `REQ-TOP-01` | Pure Structural Top | `RECOMMENDED` | Top module `hms_timer` thuần nối dây tín hiệu, không chứa logic rời rạc (0 `assign`, 0 `always`). |
 
 *Ghi chú: Toàn bộ các yêu cầu kỹ thuật được phân loại chuẩn xác theo chuẩn rtl_spec_architect và được kiểm chứng 100% qua 14 Test Cases tại Chương 4.*
@@ -172,7 +172,7 @@ Top module `hms_timer` là module cấp cao nhất đóng gói toàn bộ các s
 | Tên chân tín hiệu | Hướng | Số bit | Loại tín hiệu | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz Master | Xung nhịp toàn cục hệ thống (1 MHz, chu kỳ 1 µs) | Tần số ổn định 1 MHz | N/A |
-| `rstn` | Input | 1 | Reset | Async/Sync | Reset toàn cục, tích cực mức thấp (qua bộ reset synchronizer) | Tích cực khi `rstn = 0` | `0` |
+| `rstn` | Input | 1 | Reset | Async (Active-Low) | Reset toàn cục bất đồng bộ, tích cực mức thấp (được đồng bộ hóa giải trừ qua reset_sync) | Tích cực khi `rstn = 0` | `0` |
 | `sel_in` | Input | 1 | Async In | Async | Nút bấm chọn chuyển đổi chế độ (`MODE`) | Tích cực mức cao (`1`) | N/A |
 | `up_in` | Input | 1 | Async In | Async | Nút bấm tăng giá trị thời gian (`UP`) | Tích cực mức cao (`1`) | N/A |
 | `down_in` | Input | 1 | Async In | Async | Nút bấm giảm giá trị thời gian (`DOWN`) | Tích cực mức cao (`1`) | N/A |
@@ -187,7 +187,7 @@ Top module `hms_timer` là module cấp cao nhất đóng gói toàn bộ các s
 ## 2.3 Nguyên lý hoạt động tổng thể & Mối quan hệ tương tác giữa các Sub-module
 
 1. **Kiến trúc Miền Xung Nhịp Đồng Bộ Duy Nhất với Pulse Clock Enable (Universal Synchronous Architecture)**:
-   - Toàn bộ các module tuần tự trong hệ thống (`reset_sync`, `clk_prescaler`, `button_debouncer`, `button_controller`, `mode_controller`, `second_counter`, `minute_counter`, `hour_counter`) đều nhận trực tiếp xung nhịp chủ 1 MHz (`clk`) và đường reset đồng bộ `rstn_sync`.
+   - Toàn bộ các module tuần tự trong hệ thống (`reset_sync`, `clk_prescaler`, `button_debouncer`, `button_controller`, `mode_controller`, `second_counter`, `minute_counter`, `hour_counter`) đều nhận trực tiếp xung nhịp chủ 1 MHz (`clk`) và đường reset bất đồng bộ giải trừ đồng bộ `rstn_sync`.
    - Các sự kiện chuyển mạch tần số thấp được kích hoạt bằng các xung Clock Enable (độ rộng đúng 1 chu kỳ clock 1 MHz):
      - `pulse_1khz` (1 kHz): Kích hoạt bộ đếm khử rung trong `button_debouncer` và tầng 2 của `clk_prescaler`.
      - `sec_pulse` (1 Hz): Kích hoạt bộ đếm giây `second_counter` và bộ đếm timeout 5s trong `mode_controller`.
@@ -208,10 +208,10 @@ Top module `hms_timer` là module cấp cao nhất đóng gói toàn bộ các s
    - **Xác nhận (Commit):** Khi người dùng duyệt hết chu trình chỉnh giờ (bấm `SEL` từ `ADJ_HOUR` về `RUN`), `mode_controller` phát xung `load_en = 1`, các counter lập tức nạp giá trị mới từ buffer.
    - **Hủy bỏ (5s Timeout Rollback):** Nếu không thao tác trong 5s, FSM chuyển về `RUN` với `load_en = 0`. Module `output_switch` tự động chuyển lại hiển thị bộ đếm nền đang chạy chuẩn xác!
 
-4. **Bộ Đồng Bộ Hóa Reset Đồng Bộ Hoàn Toàn (`reset_sync`)**:
+4. **Bộ Đồng Bộ Hóa Reset Xác Lập Bất Đồng Bộ, Giải Trừ Đồng Bộ (`reset_sync`)**:
    - Toàn bộ mạng lưới reset của các khối tuần tự được cách ly khỏi đường `rstn` thô ngoại vi thông qua khối đồng bộ hóa `reset_sync`.
-   - Sử dụng 2 tầng Flip-Flop đồng bộ hóa trên sườn dương `clk` (`always_ff @(posedge clk)`), tạo ra tín hiệu `rstn_sync` kích hoạt đồng bộ.
-   - Các khối downstream sử dụng kiểu reset đồng bộ (`if (!rstn)`), ánh xạ trực tiếp vào chân reset đồng bộ (S/R) của FPGA/ASIC cells, triệt tiêu hoàn toàn vi phạm thời gian Recovery và Removal.
+   - Sử dụng 2 tầng Flip-Flop: xác lập Reset bất đồng bộ tức thời khi `rstn = 0` (zero clock latency) và giải trừ đồng bộ (`Sync Deassert`) sau 2 chu kỳ clock 1 MHz khi `rstn = 1`.
+   - Các khối downstream sử dụng kiểu reset bất đồng bộ (`always_ff @(posedge clk or negedge rstn)`), ánh xạ trực tiếp vào chân Clear/Reset bất đồng bộ của tế bào chuẩn ASIC/FPGA, kết hợp giải trừ đồng bộ qua `rstn_sync` giúp triệt tiêu hoàn toàn vi phạm thời gian Recovery và Removal.
 
 5. **Top Module Thuần Kết Nối Phần Cứng (100% Pure Structural Interconnect)**:
    - Module `hms_timer` chứa 0 câu lệnh `assign` và 0 khối `always`, chỉ đóng gói và đấu nối dây tín hiệu giữa 8 khối chức năng con.
@@ -224,7 +224,7 @@ Top module `hms_timer` là module cấp cao nhất đóng gói toàn bộ các s
 
 | Tên Tín Hiệu Nội Bộ | Chiều Rộng | Khối Phát (Driver) | Khối Nhận (Receiver) | Mô Tả Chức Năng & Mục Đích Kết Nối |
 | :--- | :---: | :--- | :--- | :--- |
-| `rstn_sync` | 1 | `u_reset_sync` | Toàn bộ các sub-module tuần tự | Tín hiệu reset tích cực mức thấp được đồng bộ hóa khử vi phạm recovery/removal |
+| `rstn_sync` | 1 | `u_reset_sync` | Toàn bộ các sub-module tuần tự | Tín hiệu reset bất đồng bộ tích cực thấp được đồng bộ hóa giải trừ khử vi phạm recovery/removal |
 | `pulse_1khz` | 1 | `u_clk_prescaler` | `u_button_controller` | Xung cho phép 1kHz (1 chu kỳ clk) cấp nhịp lấy mẫu cho bộ lọc rung phím |
 | `sec_pulse` | 1 | `u_clk_prescaler` | `u_second_counter`, `u_mode_controller` | Xung chuẩn thời gian thực 1Hz (1 chu kỳ clk) kích hoạt đếm giây và timeout |
 | `sel_pulse` | 1 | `u_button_controller` | `u_mode_controller` | Xung 1-cycle sau khi khử rung phím chọn chế độ |
@@ -272,8 +272,8 @@ Giản đồ thời gian mô tả hoạt động chuyển mạch hiển thị gi
 ---
 
 ## 3.1 Module: `reset_sync`
-**Chức năng:** Khối đồng bộ hóa reset hệ thống (Universal 2-Stage Synchronous Reset Synchronizer):
-- Sử dụng kiến trúc đồng bộ hóa 2 tầng D Flip-Flop thuần túy trên sườn dương `clk` (`always_ff @(posedge clk)`), tương thích hoàn hảo và phổ quát trên cả nền tảng FPGA (ánh xạ trực tiếp vào `FDRE`) và ASIC standard cell libraries.
+**Chức năng:** Khối đồng bộ hóa reset hệ thống (Universal 2-Stage Asynchronous Assert, Synchronous Deassert Reset Synchronizer):
+- Sử dụng kiến trúc đồng bộ hóa 2 tầng D Flip-Flop: xác lập Reset bất đồng bộ tức thời khi `rstn_async = 0` (zero clock latency) và giải trừ đồng bộ qua 2 chu kỳ xung nhịp `clk` (`always_ff @(posedge clk or negedge rstn_async)`), tương thích hoàn hảo và phổ quát trên cả nền tảng FPGA và ASIC standard cell libraries.
 - Khử rung tiếp điểm, chống vi phạm thời gian Recovery/Removal và loại trừ triệt để hiện tượng bất ổn định (Metastability) khi đường reset bất đồng bộ ngoại vi được giải trừ.
 
 ### 3.1.1 Sơ đồ khối (Block Diagram)
@@ -290,18 +290,18 @@ Sơ đồ nguyên lý cấu trúc phần cứng bên trong khối `reset_sync`:
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | Master 1 MHz | Nguồn xung nhịp hệ thống phục vụ giải trừ reset đồng bộ | Tần số ổn định | N/A |
 | `rstn_async` | Input | 1 | Reset | Async | Tín hiệu reset bất đồng bộ thô từ chân ngoại vi, tích cực mức thấp | Chuẩn | `0` |
-| `rstn_sync` | Output | 1 | Reset | Sync Deassert | Tín hiệu reset tích cực mức thấp đã đồng bộ hóa giải trừ | Đồng bộ posedge clk | `0` |
+| `rstn_sync` | Output | 1 | Reset | Sync Deassert | Tín hiệu reset tích cực mức thấp: xác lập bất đồng bộ tức thì, giải trừ đồng bộ | posedge clk / negedge rstn_async | `0` |
 
-*Ghi chú: Tín hiệu rstn_sync chuyển lên mức 1 sau 2 chu kỳ clk sau khi rstn_async giải trừ, triệt tiêu nguy cơ vi phạm timing.*
+*Ghi chú: Tín hiệu rstn_sync xác lập mức 0 bất đồng bộ ngay khi rstn_async = 0 và chuyển lên mức 1 sau 2 chu kỳ clk sau khi rstn_async giải trừ, triệt tiêu nguy cơ vi phạm timing.*
 
 ### 3.1.3 Nguyên lý hoạt động (Operating Principle)
-- **Kiến trúc Universal Synchronous 2-FF:** Khối sử dụng 2 tầng D Flip-Flop mắc nối tiếp với thuộc tính tổng hợp `(* async_reg = "true" *)`:
+- **Kiến trúc Asynchronous Assert, Synchronous Deassert 2-FF:** Khối sử dụng 2 tầng D Flip-Flop mắc nối tiếp với thuộc tính tổng hợp `(* async_reg = "true" *)`:
   - Thuộc tính `(* async_reg = "true" *)` chỉ định trình tổng hợp đặt 2 FF gần nhau trong layout vật lý và ngăn chặn việc tối ưu gộp thành thanh ghi dịch (SRL).
-  - Cả 2 tầng FF hoạt động đồng bộ trên sườn dương `clk`:
-    `r_sync_stage1 <= rstn_async;`
-    `r_sync_stage2 <= r_sync_stage1;`
+  - Cả 2 tầng FF xác lập reset bất đồng bộ và dịch `1'b1` trên sườn dương `clk`:
+    - Khi `rstn_async == 0`: `r_sync_stage1 <= 1'b0; r_sync_stage2 <= 1'b0;` ngay lập tức (không phụ thuộc xung clock).
+    - Khi `rstn_async == 1`: `r_sync_stage1 <= 1'b1; r_sync_stage2 <= r_sync_stage1;` trên các cạnh `posedge clk`.
   - Ngõ ra: `rstn_sync = r_sync_stage2;`
-- **Đồng bộ hóa an toàn:** Tín hiệu `rstn_sync` được đưa đến tất cả các khối chức năng con tuần tự trong hệ thống, đảm bảo toàn bộ hệ thống khởi động và thoát reset đồng thời và sạch sẽ.
+- **Đồng bộ hóa an toàn:** Tín hiệu `rstn_sync` được đưa đến chân reset bất đồng bộ của tất cả các khối chức năng con tuần tự trong hệ thống, đảm bảo toàn bộ hệ thống khởi động tức thời và thoát reset đồng thời, sạch sẽ sau 2 chu kỳ clock.
 
 ### 3.1.4 Giản đồ thời gian (Timing Diagram)
 
@@ -327,7 +327,7 @@ Sơ đồ phân tầng 2 bộ đếm Modulo-1000 trong `clk_prescaler`:
 | Tên chân tín hiệu | Hướng | Số bit | Loại | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz | Xung nhịp hệ thống 1 MHz | Chuẩn | N/A |
-| `rstn` | Input | 1 | Reset | Sync | Reset đồng bộ, tích cực mức thấp (`rstn_sync`) | Chuẩn | `0` |
+| `rstn` | Input | 1 | Reset | Async (Sync Deassert) | Reset bất đồng bộ tích cực thấp (từ `rstn_sync`) | Chuẩn | `0` |
 | `pulse_1khz` | Output | 1 | Enable | 1 MHz | Xung cho phép 1kHz độ rộng đúng 1 chu kỳ `clk` (1 µs) | Tầng 1 đạt P_DIV_1KHZ_MAX | `0` |
 | `sec_pulse` | Output | 1 | Enable | 1 MHz | Xung chuẩn thời gian thực 1Hz độ rộng 1 chu kỳ `clk` (1 µs) | Tầng 2 đạt P_DIV_1HZ_MAX & pulse_1khz | `0` |
 
@@ -363,7 +363,7 @@ Sơ đồ khối của mạch khử rung đơn kênh `button_debouncer`:
 | Tên chân tín hiệu | Hướng | Số bit | Loại | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz Master | Xung nhịp hệ thống 1 MHz | Dao động 1 MHz | N/A |
-| `rstn` | Input | 1 | Reset | Sync | Reset đồng bộ, tích cực mức thấp (`rstn_sync`) | Chuẩn | `0` |
+| `rstn` | Input | 1 | Reset | Async (Sync Deassert) | Reset bất đồng bộ tích cực thấp (từ `rstn_sync`) | Chuẩn | `0` |
 | `clk_en` | Input | 1 | Enable | 1 MHz | Xung cho phép lấy mẫu 1kHz (`pulse_1khz`) từ prescaler | Xung 1-cycle | `0` |
 | `btn_in` | Input | 1 | Async In | Async | Tín hiệu nút bấm đầu vào bất đồng bộ | Tích cực mức `1` | N/A |
 | `btn_event` | Output | 1 | Control | 1 MHz | Xung sự kiện hợp lệ độ rộng 1 chu kỳ clock 1 MHz (1 µs) | Tích cực mức `1` | `0` |
@@ -402,7 +402,7 @@ Sơ đồ khối của bộ điều khiển nút bấm `button_controller`:
 | Tên chân tín hiệu | Hướng | Số bit | Loại | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz | Nguồn xung nhịp hệ thống (1 MHz) | Tần số ổn định | N/A |
-| `rstn` | Input | 1 | Reset | Sync | Reset đồng bộ, tích cực mức thấp (`rstn_sync`) | Chuẩn | `0` |
+| `rstn` | Input | 1 | Reset | Async (Sync Deassert) | Reset bất đồng bộ tích cực thấp (từ `rstn_sync`) | Chuẩn | `0` |
 | `pulse_1khz` | Input | 1 | Enable | 1 MHz | Xung cho phép 1kHz từ prescaler cấp cho các khối debouncer | Xung 1-cycle | `0` |
 | `sel_in` | Input | 1 | Control | Async | Tín hiệu nút bấm chọn chế độ | Tích cực mức `1` | N/A |
 | `up_in` | Input | 1 | Control | Async | Tín hiệu nút bấm tăng giá trị | Tích cực mức `1` | N/A |
@@ -442,7 +442,7 @@ Sơ đồ khối của FSM điều khiển chế độ và bộ đệm chỉnh g
 | Tên chân tín hiệu | Hướng | Số bit | Loại | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz Master | Xung nhịp hệ thống 1 MHz | Chuẩn | N/A |
-| `rstn` | Input | 1 | Reset | Sync | Reset đồng bộ, tích cực mức thấp (`rstn_sync`) | Chuẩn | `0` |
+| `rstn` | Input | 1 | Reset | Async (Sync Deassert) | Reset bất đồng bộ tích cực thấp (từ `rstn_sync`) | Chuẩn | `0` |
 | `sel_pulse` | Input | 1 | Control | 1 MHz | Xung 1-cycle từ nút chuyển chế độ | Tích cực mức `1` | `0` |
 | `up_pulse` | Input | 1 | Control | 1 MHz | Xung 1-cycle từ nút tăng giá trị | Tích cực mức `1` | `0` |
 | `down_pulse` | Input | 1 | Control | 1 MHz | Xung 1-cycle từ nút giảm giá trị | Tích cực mức `1` | `0` |
@@ -505,7 +505,7 @@ Sơ đồ khối của bộ đếm giây `second_counter`:
 | Tên chân tín hiệu | Hướng | Số bit | Loại | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz Master | Xung nhịp hệ thống 1 MHz | Chuẩn | N/A |
-| `rstn` | Input | 1 | Reset | Sync | Reset đồng bộ, tích cực mức thấp (`rstn_sync`) | Chuẩn | `0` |
+| `rstn` | Input | 1 | Reset | Async (Sync Deassert) | Reset bất đồng bộ tích cực thấp (từ `rstn_sync`) | Chuẩn | `0` |
 | `sec_pulse` | Input | 1 | Enable | 1 MHz | Xung chuẩn 1 giây từ `clk_prescaler` (Clock Enable) | Tích cực mức `1` | `0` |
 | `load_en` | Input | 1 | Control | 1 MHz | Xung 1-cycle kích hoạt nạp song song giá trị mới | Tích cực mức `1` | `0` |
 | `load_val[5:0]` | Input | 6 | Data In | 1 MHz | Giá trị giây mới từ bộ đệm `mode_controller` | 0 .. 59 | `0` |
@@ -543,7 +543,7 @@ Sơ đồ khối của bộ đếm phút `minute_counter`:
 | Tên chân tín hiệu | Hướng | Số bit | Loại | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz Master | Xung nhịp hệ thống 1 MHz | Chuẩn | N/A |
-| `rstn` | Input | 1 | Reset | Sync | Reset đồng bộ, tích cực mức thấp (`rstn_sync`) | Chuẩn | `0` |
+| `rstn` | Input | 1 | Reset | Async (Sync Deassert) | Reset bất đồng bộ tích cực thấp (từ `rstn_sync`) | Chuẩn | `0` |
 | `sec_rollover` | Input | 1 | Enable | 1 MHz | Xung tràn từ `second_counter` (Clock Enable) | Tích cực mức `1` | `0` |
 | `load_en` | Input | 1 | Control | 1 MHz | Xung 1-cycle kích hoạt nạp song song giá trị mới | Tích cực mức `1` | `0` |
 | `load_val[5:0]` | Input | 6 | Data In | 1 MHz | Giá trị phút mới từ bộ đệm `mode_controller` | 0 .. 59 | `0` |
@@ -581,7 +581,7 @@ Sơ đồ khối của bộ đếm giờ `hour_counter`:
 | Tên chân tín hiệu | Hướng | Số bit | Loại | Miền Clock | Mô tả chức năng chi tiết | Điều kiện hợp lệ | Giá trị Reset |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | `clk` | Input | 1 | Clock | 1 MHz Master | Xung nhịp hệ thống 1 MHz | Chuẩn | N/A |
-| `rstn` | Input | 1 | Reset | Sync | Reset đồng bộ, tích cực mức thấp (`rstn_sync`) | Chuẩn | `0` |
+| `rstn` | Input | 1 | Reset | Async (Sync Deassert) | Reset bất đồng bộ tích cực thấp (từ `rstn_sync`) | Chuẩn | `0` |
 | `min_rollover` | Input | 1 | Enable | 1 MHz | Xung tràn từ `minute_counter` (Clock Enable) | Tích cực mức `1` | `0` |
 | `load_en` | Input | 1 | Control | 1 MHz | Xung 1-cycle kích hoạt nạp song song giá trị mới | Tích cực mức `1` | `0` |
 | `load_val[4:0]` | Input | 5 | Data In | 1 MHz | Giá trị giờ mới từ bộ đệm `mode_controller` | 0 .. 23 | `0` |

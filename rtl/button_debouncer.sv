@@ -35,7 +35,7 @@ module button_debouncer #(
     // 2-Stage D-FF Synchronizer sampled at 1 kHz
     logic [1:0] sync_reg;
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rstn) begin
         if (!rstn) begin
             sync_reg <= 2'b00;
         end else if (clk_en) begin
@@ -49,7 +49,7 @@ module button_debouncer #(
     generate
         if (PL_EFFECTIVE_PULSES <= 1) begin : gen_passthrough
             logic btn_d;
-            always_ff @(posedge clk) begin
+            always_ff @(posedge clk or negedge rstn) begin
                 if (!rstn) begin
                     btn_d     <= 1'b0;
                     btn_event <= 1'b0;
@@ -63,7 +63,7 @@ module button_debouncer #(
         end else begin : gen_debouncer
             logic [PL_CNT_WIDTH-1:0] timer_cnt;
 
-            always_ff @(posedge clk) begin
+            always_ff @(posedge clk or negedge rstn) begin
                 if (!rstn) begin
                     timer_cnt <= '0;
                     btn_event <= 1'b0;

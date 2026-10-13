@@ -25,7 +25,7 @@ module hour_counter #(
 
     logic [P_HOUR_WIDTH-1:0] r_hour;
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rstn) begin
         if (!rstn) begin
             r_hour <= '0;
         end else if (load_en) begin

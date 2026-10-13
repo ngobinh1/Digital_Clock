@@ -39,12 +39,16 @@ module clk_prescaler #(
 
     generate
         if (P_DIV_1KHZ_MAX == 0) begin : gen_div1_stage1
-            always_ff @(posedge clk) begin
-                r_cnt_1khz <= '0;
+            always_ff @(posedge clk or negedge rstn) begin
+                if (!rstn) begin
+                    r_cnt_1khz <= '0;
+                end else begin
+                    r_cnt_1khz <= '0;
+                end
             end
             assign w_pulse_1khz = 1'b1;
         end else begin : gen_cnt_stage1
-            always_ff @(posedge clk) begin
+            always_ff @(posedge clk or negedge rstn) begin
                 if (!rstn) begin
                     r_cnt_1khz <= '0;
                 end else begin
@@ -69,12 +73,16 @@ module clk_prescaler #(
 
     generate
         if (P_DIV_1HZ_MAX == 0) begin : gen_div1_stage2
-            always_ff @(posedge clk) begin
-                r_cnt_1hz <= '0;
+            always_ff @(posedge clk or negedge rstn) begin
+                if (!rstn) begin
+                    r_cnt_1hz <= '0;
+                end else begin
+                    r_cnt_1hz <= '0;
+                end
             end
             assign w_sec_pulse = w_pulse_1khz;
         end else begin : gen_cnt_stage2
-            always_ff @(posedge clk) begin
+            always_ff @(posedge clk or negedge rstn) begin
                 if (!rstn) begin
                     r_cnt_1hz <= '0;
                 end else begin

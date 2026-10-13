@@ -26,7 +26,7 @@ module second_counter #(
 
     logic [P_SEC_WIDTH-1:0] r_sec;
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rstn) begin
         if (!rstn) begin
             r_sec <= '0;
         end else if (load_en) begin

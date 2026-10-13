@@ -68,7 +68,7 @@ module mode_controller #(
     //--------------------------------------------------------------------------
     // FSM & Inactivity Timeout Sequential Logic (Pure Synchronous)
     //--------------------------------------------------------------------------
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or negedge rstn) begin
         if (!rstn) begin
             state_reg    <= MODE_RUN;
             timeout_cnt  <= '0;
