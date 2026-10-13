@@ -6,7 +6,6 @@
 //              - Synchronous parallel load from mode_controller when load_en = 1
 //              - Synchronous rollover flag generation (min_rollover)
 //              - Synchronous reset on 1 MHz master clock
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

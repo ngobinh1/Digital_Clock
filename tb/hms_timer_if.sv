@@ -3,7 +3,6 @@
 // Interface: hms_timer_if
 // Description: SystemVerilog Verification Interface for HMS_Timer IP Core,
 //              equipped with Clocking Blocks, Modports and SVA Concurrent Assertions.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer
 // Language: SystemVerilog
 //==============================================================================

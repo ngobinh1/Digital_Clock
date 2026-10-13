@@ -11,7 +11,6 @@
 //              - Glitch Rejection: Presses < 18ms are strictly ignored.
 //              - Auto-Repeat: Emits 1-cycle master clock pulse (btn_event) every 18ms
 //                when button is held continuously.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

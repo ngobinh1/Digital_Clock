@@ -11,7 +11,6 @@
 //              - Commit on Exit: Asserting 1-cycle load_en pulse when completing
 //                the adjustment loop (HOUR -> RUN via sel_pulse)
 //              - Pure synchronous single-clock domain design (1 MHz)
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

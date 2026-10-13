@@ -4,7 +4,6 @@
 // Description: Scoreboard and Golden Reference Model for HMS_Timer verification.
 //              Compares DUT outputs against Golden reference states and generates
 //              formal verification scorecards.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer
 // Language: SystemVerilog
 //==============================================================================

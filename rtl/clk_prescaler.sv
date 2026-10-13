@@ -10,7 +10,6 @@
 //                * Debouncer modules sample on pulse_1khz with small 5-bit counters.
 //                * Shortens adder critical path for timing closure / higher Fmax.
 //                * Pure synchronous single-clock domain design.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

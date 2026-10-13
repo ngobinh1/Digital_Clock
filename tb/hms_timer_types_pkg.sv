@@ -3,7 +3,6 @@
 // Package: hms_timer_types_pkg
 // Description: Type definitions, Enumerations, Loggers and Utility functions
 //              for HMS_Timer SystemVerilog Verification Environment.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer
 // Language: SystemVerilog
 //==============================================================================

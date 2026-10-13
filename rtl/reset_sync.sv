@@ -5,7 +5,6 @@
 //              - Synchronizes raw reset input to posedge clk.
 //              - Eliminates contact bounce, recovery/removal violations and metastability.
 //              - 100% synchronous, portable across ASIC and FPGA.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

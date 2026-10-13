@@ -12,7 +12,6 @@
 //              - Synchronous parallel load commit upon exiting adjustment loop
 //              - 100% portable single-clock synchronous architecture for both ASIC & FPGA
 //              - Pure structural interconnect (zero internal logic processing)
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

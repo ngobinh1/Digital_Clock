@@ -11,7 +11,6 @@
 //              - Golden Reference Model & Cycle-accurate Scoreboard
 //              - SystemVerilog Concurrent Assertions (SVA) Checkers
 //              - Functional Coverage Metric Tracking
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer
 // Language: SystemVerilog
 //==============================================================================

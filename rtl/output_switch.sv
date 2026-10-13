@@ -5,7 +5,6 @@
 //              - Real-time background counter values (when in MODE_RUN)
 //              - Interactive edit buffer values from mode_controller (when in MODE_ADJ_*)
 //              Pure zero-latency combinational logic (no flip-flops).
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

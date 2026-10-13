@@ -4,7 +4,6 @@
 // Description: Functional Coverage model for HMS_Timer IP Core verification.
 //              Measures coverage for FSM States, Transitions, Time Ranges,
 //              Rollovers, and Button Stimulus combinations.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer
 // Language: SystemVerilog
 //==============================================================================

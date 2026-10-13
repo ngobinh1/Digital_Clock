@@ -6,7 +6,6 @@
 //              - Filters mechanical switch contact bounce with 20ms ±10% tolerance (18 pulses)
 //              - Implements continuous auto-repeat pulse generation
 //              - Emits clean single-cycle 1 MHz pulses (1 µs) directly
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer (Hour-Minute-Second Timer IP Core)
 // Language: SystemVerilog (IEEE 1800 Synthesizable)
 //==============================================================================

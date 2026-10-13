@@ -3,7 +3,6 @@
 // Class: hms_driver
 // Description: SystemVerilog Driver class for generating asynchronous and
 //              synchronous button stimulus (sel, up, down) and controlling reset.
-// Author: Antigravity - RTL Questa Expert
 // Project: HMS_Timer
 // Language: SystemVerilog
 //==============================================================================
